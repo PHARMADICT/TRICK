@@ -3,1563 +3,1728 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>VYSAKH SALES TRACKER</title>
+<title>VYSAKH MASTER SALES TRACKER</title>
 <style>
     :root {
-        --bg: #f2f5fa;
-        --navy: #0a1931;
-        --navy-light: #162a4a;
-        --blue: #007aff;
-        --green: #20a766;
-        --red: #ff3b30;
+        --bg: #f8fafc;
         --card: #ffffff;
-        --border: #e5ebf3;
-        --text: #1c2738;
-        --muted: #7f8ea3;
+        --border: #e2e8f0;
+        --border-subtle: #edf2f7;
+        --text: #0f172a;
+        --muted: #64748b;
+        --navy: #0f243d;
+        --green: #059669;
+        --green-light: #ecfdf5;
+        --green-border: #a7f3d0;
+        --wa-green: #25D366;
+        --blue: #2563eb;
+        --red: #ef4444;
+        --amber: #f59e0b;
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,sans-serif; -webkit-tap-highlight-color:transparent; }
-    body { background:var(--bg); min-height:100vh; padding:calc(0.75rem + env(safe-area-inset-top)) 0.65rem calc(9rem + env(safe-area-inset-bottom)); display:flex; flex-direction:column; align-items:center; color:var(--text); animation: fadeInBody 0.3s ease; }
-    @keyframes fadeInBody { from{opacity:0;} to{opacity:1;} }
-    .app { max-width:520px; width:100%; position:relative; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-tap-highlight-color:transparent; }
+    body { background:var(--bg); min-height:100vh; padding:calc(0.5rem + env(safe-area-inset-top)) 0.5rem calc(6.5rem + env(safe-area-inset-bottom)); color:var(--text); display:flex; flex-direction:column; align-items:center; }
+    .app { max-width:680px; width:100%; position:relative; }
 
-    /* PIN LOCK OVERLAY */
-    .pin-overlay { position:fixed; inset:0; background:linear-gradient(160deg,#08152b 0%,#12284c 100%); z-index:2000; display:none; flex-direction:column; align-items:center; justify-content:center; padding:1.5rem; color:white; }
-    .pin-overlay.active { display:flex; animation: fadeInBody 0.2s ease; }
-    .pin-title { font-size:1.25rem; font-weight:800; letter-spacing:0.5px; margin-bottom:0.3rem; }
-    .pin-sub { font-size:0.78rem; opacity:0.75; margin-bottom:1.6rem; text-align:center; }
-    .pin-dots { display:flex; gap:0.9rem; margin-bottom:2.2rem; }
-    .pin-dot { width:15px; height:15px; border-radius:50%; border:2px solid rgba(255,255,255,0.45); transition:0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    .pin-dot.filled { background:#4ade80; border-color:#4ade80; transform:scale(1.2); }
-    .pin-dot.error { background:var(--red); border-color:var(--red); animation:shake 0.3s; }
-    @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
-    .pin-pad { display:grid; grid-template-columns:repeat(3, 74px); gap:1rem; }
-    .pin-key { width:74px; height:74px; border-radius:50%; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.08); color:white; font-size:1.55rem; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; user-select:none; backdrop-filter:blur(8px); transition:transform 0.1s, background 0.15s; }
-    .pin-key:active { background:rgba(255,255,255,0.28); transform:scale(0.92); }
-    .pin-key.action { font-size:0.85rem; font-weight:700; background:transparent; border-color:transparent; opacity:0.85; }
-
-    /* MODALS */
-    .modal-overlay { position:fixed; inset:0; background:rgba(10,25,49,0.7); backdrop-filter:blur(6px); z-index:1500; display:none; align-items:center; justify-content:center; padding:1rem; }
-    .modal-overlay.active { display:flex; animation: fadeInBody 0.2s ease; }
-    .modal-card { background:white; width:100%; max-width:420px; border-radius:1.2rem; padding:1.2rem; box-shadow:0 12px 32px rgba(10,25,49,0.25); border:1px solid var(--border); max-height:90vh; overflow-y:auto; }
-    .modal-title { font-size:1rem; font-weight:800; color:var(--navy); margin-bottom:0.8rem; display:flex; justify-content:space-between; align-items:center; }
-    .modal-group { margin-bottom:0.7rem; }
-    .modal-group label { font-size:0.72rem; font-weight:700; color:#43648b; display:block; margin-bottom:0.25rem; }
-    .modal-group input, .modal-group textarea, .modal-group select { width:100%; border:1.5px solid #d8e2ef; border-radius:0.75rem; padding:0.5rem 0.75rem; font-size:0.85rem; color:var(--text); background:#f9fbfe; outline:none; font-weight:600; }
-    .modal-group input:focus, .modal-group textarea:focus, .modal-group select:focus { border-color:var(--blue); background:white; box-shadow:0 0 0 3px rgba(0,122,255,0.12); }
-
-    /* LOCATION SELECTOR BAR */
-    .loc-bar { display:flex; gap:0.4rem; background:white; padding:0.35rem; border-radius:0.8rem; border:1px solid var(--border); margin-bottom:0.8rem; }
-    .loc-tab { flex:1; padding:0.5rem 0.1rem; text-align:center; font-size:0.65rem; font-weight:900; color:#43648b; border-radius:0.5rem; cursor:pointer; transition:all 0.15s; letter-spacing:0.3px; }
-    .loc-tab.active { background:var(--navy); color:white; box-shadow:0 3px 8px rgba(10,25,49,0.2); }
-
-    /* TOPBAR & DASHBOARD DATE BAR */
-    .topbar { background:linear-gradient(135deg,var(--navy),var(--navy-light)); color:white; border-radius:1.4rem; padding:0.85rem 1rem; margin-bottom:0.8rem; box-shadow:0 8px 20px rgba(10,25,49,0.22); }
-    .topbar-row1 { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.65rem; }
-    .topbar h1 { font-size:1.1rem; font-weight:800; letter-spacing:-0.3px; display:flex; align-items:center; gap:0.4rem; }
-    .topbar h1 span { background:var(--green); font-size:0.62rem; padding:0.18rem 0.55rem; border-radius:20px; letter-spacing:0.5px; }
-    .lock-btn { background:rgba(255,255,255,0.14); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; justify-content:center; }
-
-    .date-bar { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.12); border-radius:0.95rem; padding:0.35rem 0.5rem; gap:0.35rem; }
-    .date-nav-btn { background:rgba(255,255,255,0.16); border:none; color:white; width:30px; height:30px; border-radius:0.65rem; font-size:0.8rem; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .date-picker-wrap { flex:1; display:flex; align-items:center; justify-content:center; gap:0.35rem; position:relative; }
-    .date-input { background:transparent; border:none; color:white; font-size:0.82rem; font-weight:700; text-align:center; cursor:pointer; outline:none; color-scheme:dark; }
-    .today-jump-btn { background:var(--green); color:white; border:none; padding:0.28rem 0.6rem; border-radius:0.6rem; font-size:0.68rem; font-weight:800; cursor:pointer; display:none; }
-    .today-jump-btn.show { display:inline-block; }
-
-    /* DASHBOARD ICON TILES BAR */
-    .dashboard-tiles { display:flex; gap:0.5rem; overflow-x:auto; padding-bottom:0.4rem; margin-bottom:0.4rem; scrollbar-width:none; }
-    .dashboard-tiles::-webkit-scrollbar { display:none; }
-    .dash-tile { background:white; border:1.5px solid var(--border); border-radius:1rem; padding:0.45rem 0.55rem; min-width:76px; max-width:82px; display:flex; flex-direction:column; align-items:center; text-align:center; cursor:pointer; flex-shrink:0; box-shadow:0 3px 10px rgba(10,25,49,0.04); }
-    .dash-tile:active { transform:scale(0.92); background:#f4f8fc; border-color:var(--blue); }
-    .dash-tile-img { width:38px; height:38px; border-radius:0.7rem; background:#edf3fc; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:0.25rem; font-size:1.3rem; border:1px solid rgba(0,0,0,0.03); }
-    .dash-tile-img img { width:100%; height:100%; object-fit:cover; }
-    .dash-tile-name { font-size:0.62rem; font-weight:700; color:var(--text); line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; width:100%; }
+    /* TOP BAR WITH UNDO / REDO */
+    .topbar { background:white; border:1px solid var(--border); border-radius:1rem; padding:0.55rem 0.7rem; margin-bottom:0.55rem; display:flex; justify-content:space-between; align-items:center; gap:0.35rem; flex-wrap:wrap; box-shadow:0 2px 6px rgba(0,0,0,0.03); }
+    .brand-title { font-size:0.9rem; font-weight:900; color:var(--navy); display:flex; align-items:center; gap:0.3rem; }
+    .brand-title span { background:var(--green); color:white; font-size:0.58rem; padding:0.14rem 0.45rem; border-radius:12px; font-weight:800; }
     
-    .dash-tile-placeholder-text { font-size:1rem; font-weight:900; color:#839bb9; letter-spacing:0.5px; }
-    .pimg-placeholder-text { font-size:1.6rem; font-weight:900; color:#839bb9; letter-spacing:1px; }
+    .undo-redo-bar { display:flex; gap:0.25rem; align-items:center; }
+    .ur-btn { background:#f1f5f9; border:1px solid var(--border); color:var(--navy); padding:0.3rem 0.55rem; border-radius:0.5rem; font-size:0.68rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:0.2rem; }
+    .ur-btn:disabled { opacity:0.38; cursor:not-allowed; }
+    .ur-btn:not(:disabled):active { background:var(--green-light); border-color:var(--green); }
 
-    /* BOTTOM FLOATING PAGE FLIP NAVIGATION BAR */
-    .bottom-nav-bar { position:fixed; bottom:4.2rem; left:50%; transform:translateX(-50%); width:calc(100% - 1.3rem); max-width:500px; background:rgba(10,25,49,0.95); backdrop-filter:blur(12px); border-radius:1.2rem; padding:0.35rem; display:flex; gap:0.3rem; z-index:45; box-shadow:0 6px 20px rgba(10,25,49,0.25); border:1px solid rgba(255,255,255,0.15); }
-    .nav-tab-btn { flex:1; padding:0.55rem 0.3rem; border:none; background:transparent; border-radius:0.9rem; font-size:0.75rem; font-weight:700; color:#a3b8d1; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.3rem; transition:all 0.2s ease; }
-    .nav-tab-btn.active { background:var(--blue); color:white; box-shadow:0 2px 8px rgba(0,122,255,0.3); }
+    .date-strip { display:flex; align-items:center; gap:0.2rem; background:var(--bg); padding:0.2rem 0.35rem; border-radius:0.55rem; border:1px solid var(--border); }
+    .date-strip input { background:transparent; border:none; font-size:0.72rem; font-weight:800; color:var(--navy); outline:none; }
+    .d-btn { background:white; border:1px solid var(--border); width:22px; height:22px; border-radius:4px; font-size:0.7rem; font-weight:800; color:var(--navy); cursor:pointer; }
 
+    /* EDITABLE LOCATION BAR & STORE MANAGER */
+    .store-selector-card { background:white; border-radius:0.8rem; border:1px solid var(--border); padding:0.5rem; margin-bottom:0.55rem; }
+    .loc-bar { display:flex; gap:0.3rem; overflow-x:auto; padding-bottom:0.2rem; }
+    .loc-tab { background:#f8fafc; border:1px solid var(--border); padding:0.36rem 0.6rem; font-size:0.66rem; font-weight:800; color:var(--muted); border-radius:0.5rem; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; gap:0.25rem; }
+    .loc-tab.active { background:var(--navy); color:white; border-color:var(--navy); }
+    .loc-tab .del-store { opacity:0.6; font-size:0.6rem; margin-left:2px; }
+    .loc-tab .del-store:hover { opacity:1; color:var(--red); }
+
+    /* PANEL TOGGLE */
     .panel { display:none; }
-    .panel.active { display:block; animation:fadeInPanel 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-    @keyframes fadeInPanel { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+    .panel.active { display:block; animation:fadeIn 0.18s ease; }
+    @keyframes fadeIn { from{opacity:0; transform:translateY(3px);} to{opacity:1; transform:translateY(0);} }
 
-    .card { background:var(--card); border-radius:1.4rem; padding:0.95rem; box-shadow:0 6px 18px rgba(10,25,49,0.06); margin-bottom:0.8rem; border:1px solid var(--border); }
+    /* CARDS */
+    .card { background:var(--card); border-radius:1rem; border:1px solid var(--border); padding:0.7rem; margin-bottom:0.55rem; box-shadow:0 2px 8px rgba(0,0,0,0.02); }
 
-    /* SEARCH */
-    .search-wrap { display:flex; gap:0.4rem; margin-bottom:0.75rem; }
-    .search-wrap input[type=text] { flex:1; border:1.5px solid #d5e0ee; border-radius:0.85rem; padding:0.55rem 0.85rem; font-size:0.82rem; color:var(--text); background:#f8fafd; font-weight:700; }
-    .filter-toggle { border:1.5px solid #d5e0ee; background:white; border-radius:0.85rem; padding:0.55rem 0.75rem; font-size:0.72rem; font-weight:800; color:#43648b; cursor:pointer; white-space:nowrap; }
-    .filter-toggle.on { background:var(--green); color:white; border-color:var(--green); }
+    /* SEARCH & BRAND CHIPS */
+    .search-row { display:flex; gap:0.3rem; margin-bottom:0.4rem; }
+    .search-row input { flex:1; border:1px solid var(--border); border-radius:0.6rem; padding:0.4rem 0.65rem; font-size:0.74rem; font-weight:700; outline:none; background:#fafafa; }
+    .search-row input:focus { border-color:var(--green); background:white; }
 
-    /* PRODUCT GRID */
-    .grid-products { display:grid; grid-template-columns:repeat(3, 1fr); gap:0.55rem; }
-    .product-tile { background:#f9fbff; border:1.5px solid #e1eaf5; border-radius:1.1rem; padding:0.45rem; cursor:pointer; transition:transform 0.12s, background 0.15s; display:flex; flex-direction:column; align-items:center; text-align:center; position:relative; user-select:none; overflow:hidden; box-shadow:0 2px 6px rgba(10,25,49,0.04); }
-    .product-tile.promo { border-color:#74d3a3; background:#f4fbf7; }
-    .product-tile:active { transform:scale(0.90); background:#d8e8fc; border-color:var(--blue); }
-    .product-tile.pulse-anim { animation: tilePulse 0.35s ease; }
-    @keyframes tilePulse { 0%{transform:scale(1);} 50%{transform:scale(0.88); background:#b8d6fc;} 100%{transform:scale(1);} }
+    .brand-chips { display:flex; gap:0.28rem; overflow-x:auto; padding-bottom:0.35rem; margin-bottom:0.35rem; scrollbar-width:none; }
+    .brand-chips::-webkit-scrollbar { display:none; }
+    .b-chip { border:1px solid var(--border); background:#f8fafc; color:var(--muted); padding:0.22rem 0.55rem; border-radius:20px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap; }
+    .b-chip.active { background:var(--green); color:white; border-color:var(--green); }
 
-    .pimg-box { width:100%; aspect-ratio:1/1; border-radius:0.8rem; background:linear-gradient(135deg,#e8f0fe,#f3f7fc); display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:0.4rem; position:relative; border:1px solid rgba(0,0,0,0.03); }
-    .pimg-box img { width:100%; height:100%; object-fit:cover; display:block; }
-    .product-tile .pname { font-size:0.71rem; font-weight:800; color:var(--text); line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:1.72rem; margin-bottom:0.2rem; }
-    .product-tile .pprice { font-size:0.68rem; font-weight:900; color:var(--blue); background:rgba(0,122,255,0.09); padding:0.14rem 0.42rem; border-radius:10px; }
-    .product-tile .pbadge { position:absolute; top:0.35rem; right:0.35rem; font-size:0.5rem; font-weight:800; background:var(--green); color:white; padding:0.12rem 0.36rem; border-radius:20px; z-index:2; }
-    .product-tile .qty-tap-badge { position:absolute; top:0.35rem; left:0.35rem; font-size:0.62rem; font-weight:900; background:var(--navy); color:white; min-width:20px; height:20px; padding:0 5px; border-radius:10px; display:flex; align-items:center; justify-content:center; z-index:2; }
+    /* COMPACT 1/4 SIZED PRODUCT TILES */
+    .grid-compact { display:grid; grid-template-columns:repeat(4, 1fr); gap:0.35rem; margin-bottom:0.2rem; }
+    .tile-compact { background:white; border:1px solid var(--border); border-radius:0.6rem; padding:0.42rem 0.2rem; display:flex; flex-direction:column; align-items:center; text-align:center; cursor:pointer; position:relative; min-height:58px; justify-content:center; user-select:none; transition:all 0.12s; }
+    .tile-compact.just-tapped { background:var(--green-light); border-color:var(--green); box-shadow:0 0 0 2px rgba(5,150,105,0.25); }
+    .tile-brand { font-size:0.52rem; font-weight:900; color:var(--green); text-transform:uppercase; margin-bottom:0.1rem; padding:0 4px; border-radius:4px; background:var(--green-light); }
+    .tile-name { font-size:0.62rem; font-weight:800; color:var(--text); line-height:1.15; max-height:2.2rem; overflow:hidden; margin-top:2px; }
+    .tile-price { font-size:0.6rem; font-weight:900; color:var(--navy); margin-top:0.15rem; }
 
-    .floating-plus { position:absolute; font-size:1.2rem; font-weight:900; color:var(--green); pointer-events:none; z-index:100; animation: floatUpAndFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    @keyframes floatUpAndFade { 0%{opacity:1; transform:translateY(0) scale(0.8);} 100%{opacity:0; transform:translateY(-55px) scale(1.3);} }
+    /* 1-SECOND PAUSE & RECONFIRM POP-UP BAR */
+    .reconfirm-popup { position:fixed; bottom:calc(4.3rem + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%) translateY(30px); width:calc(100% - 1rem); max-width:500px; background:var(--navy); color:white; border-radius:0.9rem; padding:0.55rem 0.7rem; z-index:1500; box-shadow:0 10px 28px rgba(15,36,61,0.35); border:1.5px solid var(--green); display:none; flex-direction:column; gap:0.35rem; opacity:0; transition:all 0.2s ease; }
+    .reconfirm-popup.show { display:flex; transform:translateX(-50%) translateY(0); opacity:1; }
+    .rc-top { display:flex; justify-content:space-between; align-items:center; gap:0.4rem; }
+    .rc-title { font-size:0.74rem; font-weight:900; color:#a7f3d0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .rc-actions { display:flex; gap:0.3rem; align-items:center; justify-content:space-between; }
+    .rc-btn { border:none; border-radius:0.45rem; padding:0.32rem 0.55rem; font-size:0.68rem; font-weight:900; cursor:pointer; display:inline-flex; align-items:center; gap:0.2rem; }
+    .rc-btn-step { background:rgba(255,255,255,0.16); color:white; }
+    .rc-btn-edit { background:var(--blue); color:white; }
+    .rc-btn-undo { background:var(--red); color:white; }
+    .rc-btn-ok { background:var(--green); color:white; }
+    .rc-progress { height:3px; background:var(--green); width:100%; border-radius:2px; transition:width 0.1s linear; }
 
-    /* TABLE VIEW */
-    .table-container { width:100%; overflow-x:auto; margin-top:0.4rem; }
-    .sales-table { width:100%; border-collapse:collapse; font-size:0.72rem; text-align:left; }
-    .sales-table th { background:#eef3fa; color:var(--navy); padding:0.5rem 0.4rem; font-weight:900; white-space:nowrap; border-bottom:2px solid #d5e0ee; }
-    .sales-table td { padding:0.5rem 0.4rem; border-bottom:1px solid #eef2f8; color:var(--text); vertical-align:middle; font-weight:700; }
-    .sales-table tr:hover { background:#f7faff; }
+    /* TABLES COMMON */
+    .tbl-wrap { width:100%; overflow-x:auto; }
+    .clean-table { width:100%; border-collapse:collapse; font-size:0.72rem; }
+    .clean-table th { background:#f8fafc; color:var(--muted); font-size:0.6rem; text-transform:uppercase; padding:0.45rem 0.3rem; border-bottom:1.5px solid var(--border); text-align:left; font-weight:800; white-space:nowrap; }
+    .clean-table td { padding:0.4rem 0.3rem; border-bottom:1px solid var(--border-subtle); vertical-align:middle; font-weight:700; }
 
-    .empty-msg { text-align:center; color:var(--muted); font-size:0.8rem; font-weight:700; padding:1.1rem 0; }
+    /* INLINE EDITABLE INPUTS INSIDE TABLES */
+    .cell-inp { width:100%; border:1px solid transparent; background:transparent; font-size:0.72rem; font-weight:700; color:inherit; padding:0.22rem 0.25rem; border-radius:4px; outline:none; transition:border 0.12s, background 0.12s; }
+    .cell-inp:hover { border-color:var(--border); background:#fcfdfe; }
+    .cell-inp:focus { border-color:var(--green); background:white; box-shadow:0 0 0 2px rgba(5,150,105,0.12); }
+    .num-inp { text-align:right; font-variant-numeric:tabular-nums; }
 
-    /* SUMMARY BOX */
-    .sticky-summary { position:fixed; bottom:0; left:0; right:0; background:rgba(10,25,49,0.96); backdrop-filter:blur(12px); color:white; padding:0.6rem 1rem calc(0.5rem + env(safe-area-inset-bottom)); box-shadow:0 -6px 22px rgba(10,25,49,0.3); z-index:40; display:none; }
-    .sticky-summary.show { display:block; }
-    .sticky-inner { max-width:520px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; }
-    .sticky-summary .lbl, .summary-box .lbl { font-size:0.64rem; opacity:0.75; font-weight:700; }
-    .sticky-summary .val, .summary-box .val { font-size:1.05rem; font-weight:900; }
-    .sticky-summary .commission, .summary-box .commission { font-size:0.68rem; background:var(--green); padding:0.22rem 0.65rem; border-radius:20px; font-weight:900; }
-    .summary-box { background:linear-gradient(135deg,var(--navy),var(--navy-light)); color:white; border-radius:1.15rem; padding:0.85rem 1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; }
+    /* DATE SECTION HEADER IN MASTER LEDGER */
+    .ledger-date-header { background:var(--green-light); border-top:1.5px solid var(--green-border); border-bottom:1px solid var(--green-border); padding:0.45rem 0.6rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; }
+    .ledger-date-txt { font-size:0.76rem; font-weight:900; color:var(--green); }
+    .store-inp-wrap { display:flex; align-items:center; gap:0.3rem; flex:1; max-width:320px; }
+    .store-inp-wrap span { font-size:0.6rem; font-weight:900; color:var(--navy); white-space:nowrap; text-transform:uppercase; }
+    .store-inp-wrap input { flex:1; border:1px solid var(--green-border); border-radius:4px; padding:0.24rem 0.45rem; font-size:0.7rem; font-weight:700; outline:none; background:white; color:var(--navy); }
+
+    /* STEPPERS */
+    .step-btn { width:21px; height:21px; border:1px solid var(--border); background:white; border-radius:4px; font-weight:900; font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--navy); }
+    .step-btn:active { background:var(--green-light); border-color:var(--green); }
+
+    /* SUB-TOTALS & GRAND TOTAL */
+    .subtotal-line { background:#fcfdfd; font-weight:900; color:var(--navy); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    .subtotal-line td { padding:0.45rem 0.3rem; }
+    .grandtotal-line { background:var(--navy); color:white; font-weight:900; }
+    .grandtotal-line td { padding:0.65rem 0.35rem; font-size:0.76rem; color:white; }
 
     /* BUTTONS */
-    .btn { border:none; border-radius:0.95rem; padding:0.7rem 1rem; font-size:0.8rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem; transition:transform 0.12s; }
-    .btn:active { transform:scale(0.96); }
-    .btn-primary { background:var(--blue); color:white; }
+    .btn { border:none; border-radius:0.55rem; padding:0.42rem 0.7rem; font-size:0.7rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:0.25rem; }
+    .btn-primary { background:var(--navy); color:white; }
     .btn-green { background:var(--green); color:white; }
-    .btn-outline { background:white; color:var(--text); border:1.5px solid #d0dae8; }
+    .btn-wa { background:var(--wa-green); color:#073b1a; font-weight:900; }
+    .btn-outline { background:white; border:1px solid var(--border); color:var(--navy); }
     .btn-danger { background:var(--red); color:white; }
-    .btn-sm { padding:0.35rem 0.6rem; font-size:0.68rem; border-radius:0.65rem; }
-    .btn-block { width:100%; }
+    .btn-sm { padding:0.24rem 0.48rem; font-size:0.64rem; border-radius:0.4rem; }
 
-    /* SETTINGS & PRODUCT ADDITION FORM */
-    .add-product-card { background:#f4f8fc; border:1.5px dashed var(--blue); border-radius:1rem; padding:0.85rem; margin-bottom:1rem; }
-    .setting-row { display:flex; align-items:center; gap:0.42rem; padding:0.6rem 0; border-bottom:1px solid #eef2f8; flex-wrap:wrap; }
-    .setting-img-btn { width:44px; height:44px; border-radius:0.75rem; border:1.5px dashed #b0c4de; background:#f5f9ff; cursor:pointer; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; position:relative; font-size:0.85rem; font-weight:900; color:#839bb9; }
-    .setting-img-btn img { width:100%; height:100%; object-fit:cover; }
-    .setting-img-btn span.edit-lbl { font-size:0.48rem; position:absolute; bottom:0; left:0; right:0; background:rgba(10,25,49,0.72); color:white; text-align:center; padding:1px 0; font-weight:800; }
-    .setting-row input[type=text], .setting-row input[type=number], .setting-row input[type=password] { border:1.5px solid #d8e2ef; border-radius:0.6rem; padding:0.42rem 0.55rem; font-size:0.78rem; color:var(--text); background:#f9fbfe; font-weight:700; }
-    .setting-row .inp-name { flex:2; min-width:110px; }
-    .setting-row .inp-price { width:70px; }
-    .setting-row .inp-pct { width:72px; }
-    .chk-label { display:flex; align-items:center; gap:0.25rem; font-size:0.72rem; font-weight:800; color:#43648b; white-space:nowrap; cursor:pointer; }
+    /* MODALS */
+    .modal-overlay { position:fixed; inset:0; background:rgba(15,36,61,0.6); backdrop-filter:blur(4px); z-index:2000; display:none; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay.active { display:flex; }
+    .modal-box { background:white; border-radius:1rem; border:1px solid var(--border); max-width:460px; width:100%; padding:1rem; box-shadow:0 12px 30px rgba(0,0,0,0.18); }
+    .modal-box textarea { width:100%; height:150px; border:1.5px solid var(--border); border-radius:0.6rem; padding:0.5rem; font-family:monospace; font-size:0.72rem; outline:none; background:#fafafa; margin:0.5rem 0; resize:none; }
+    .form-inp { width:100%; border:1px solid var(--border); border-radius:0.5rem; padding:0.45rem 0.6rem; font-size:0.75rem; font-weight:700; margin-top:0.2rem; margin-bottom:0.5rem; outline:none; }
 
-    /* HISTORY */
-    .history-item { display:flex; justify-content:space-between; align-items:center; padding:0.65rem 0.2rem; border-bottom:1px solid #eef2f8; font-size:0.78rem; flex-wrap:wrap; gap:0.3rem; cursor:pointer; }
-    .history-date { font-weight:800; color:var(--navy); }
-    .history-total { font-weight:900; color:var(--blue); }
-    .history-comm { color:var(--green); font-weight:800; }
-    .history-detail { padding:0.55rem 0.65rem 0.75rem; font-size:0.73rem; color:#43648b; line-height:1.6; background:#f7faff; border-radius:0.75rem; margin:0 0.1rem 0.5rem; display:none; border:1px solid #e3ebf6; font-weight:700; }
-    .history-detail.open { display:block; }
-    .history-detail .h-line { display:flex; justify-content:space-between; gap:0.5rem; padding:0.25rem 0; border-bottom:1px dashed #e2eaf5; }
-    .history-actions { display:flex; gap:0.45rem; margin-top:0.55rem; padding-top:0.45rem; border-top:1px solid #e2eaf5; }
+    /* BOTTOM FLOATING NAV BAR */
+    .nav-bar { position:fixed; bottom:0.75rem; left:50%; transform:translateX(-50%); width:calc(100% - 1rem); max-width:480px; background:rgba(15,36,61,0.96); backdrop-filter:blur(10px); border-radius:1rem; padding:0.3rem; display:flex; gap:0.3rem; z-index:90; box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+    .nav-btn { flex:1; padding:0.52rem 0.2rem; border:none; background:transparent; border-radius:0.75rem; font-size:0.74rem; font-weight:800; color:#94a3b8; cursor:pointer; text-align:center; }
+    .nav-btn.active { background:var(--green); color:white; }
 
-    /* TOAST */
-    .toast { position:fixed; bottom:calc(7rem + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%) translateY(80px); background:var(--navy); color:white; padding:0.65rem 1.25rem; border-radius:30px; font-size:0.78rem; font-weight:800; box-shadow:0 8px 24px rgba(10,25,49,0.32); transition:transform 0.25s, opacity 0.25s; z-index:999; opacity:0; pointer-events:none; display:flex; align-items:center; gap:0.6rem; white-space:nowrap; }
-    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; pointer-events:auto; }
-    .toast button { background:var(--green); color:white; border:none; padding:0.28rem 0.65rem; border-radius:14px; font-size:0.7rem; font-weight:800; cursor:pointer; }
+    .toast { position:fixed; top:calc(0.8rem + env(safe-area-inset-top)); left:50%; transform:translateX(-50%) translateY(-50px); background:var(--navy); color:white; padding:0.42rem 0.95rem; border-radius:20px; font-size:0.72rem; font-weight:800; transition:all 0.2s; opacity:0; pointer-events:none; z-index:2500; box-shadow:0 4px 14px rgba(0,0,0,0.2); }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 
-    .small-note { font-size:0.68rem; font-weight:700; color:var(--muted); margin-top:0.4rem; text-align:center; }
-    @media (max-width:350px) { .grid-products { grid-template-columns:repeat(2, 1fr); } }
-
-.modal-group input,.modal-group textarea,.modal-group select,.search-wrap input,#settingsSearch{font-size:16px!important}
-.dash-tile{min-width:96px;max-width:108px;padding:.55rem}.dash-tile-name{font-size:.78rem!important;font-weight:800}.dash-tile-placeholder-text{font-size:1.1rem}
-.product-tile .pname{font-size:.78rem}
-.undo-pill{position:fixed;bottom:calc(8.4rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:rgba(10,25,49,.96);color:#fff;border-radius:30px;padding:.5rem .6rem .5rem 1rem;display:flex;align-items:center;gap:.7rem;font-size:.75rem;font-weight:800;z-index:998;opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(10,25,49,.35)}
-.undo-pill.show{opacity:1;pointer-events:auto}.undo-pill.fade{animation:pillFade 6s linear forwards}
-.undo-pill button{background:var(--blue);color:#fff;border:none;border-radius:16px;padding:.4rem .9rem;font-weight:900;font-size:.72rem}
-@keyframes pillFade{0%,55%{opacity:1}100%{opacity:0}}
-.pin-key,.btn{touch-action:manipulation}
-@media (max-width:600px){
- .table-container{overflow-x:visible}.sales-table thead{display:none}
- .sales-table tr.table-row-item{display:grid;grid-template-columns:1fr auto;grid-template-areas:"desc total" "meta qty" "rem rem";gap:.15rem .6rem;padding:.65rem .1rem;border-bottom:1px solid #eef2f8}
- .sales-table tr.table-row-item td{display:block;border:0;padding:0}
- td:nth-child(3){grid-area:desc}td:nth-child(6){grid-area:total;text-align:right}td:nth-child(1){grid-area:meta}td:nth-child(4){grid-area:qty;text-align:right}td:nth-child(7){grid-area:rem}
- td:nth-child(2),td:nth-child(5){display:none!important}
-}
+    .history-card { border-left:3px solid var(--green); padding:0.5rem 0.7rem; background:white; border-radius:0.5rem; margin-bottom:0.4rem; font-size:0.72rem; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border); border-left-width:3px; }
 </style>
 </head>
 <body>
 
-<!-- PIN LOCK OVERLAY -->
-<div class="pin-overlay" id="pinOverlay">
-    <div style="font-size:2.2rem;margin-bottom:0.4rem;">🔒</div>
-    <div class="pin-title">VYSAKH TRACKER</div>
-    <div class="pin-sub" id="pinSubMsg">Enter 4-digit PIN to unlock</div>
-    <div class="pin-dots" id="pinDots">
-        <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-    </div>
-    <div class="pin-pad">
-        <button class="pin-key" data-k="1">1</button><button class="pin-key" data-k="2">2</button><button class="pin-key" data-k="3">3</button>
-        <button class="pin-key" data-k="4">4</button><button class="pin-key" data-k="5">5</button><button class="pin-key" data-k="6">6</button>
-        <button class="pin-key" data-k="7">7</button><button class="pin-key" data-k="8">8</button><button class="pin-key" data-k="9">9</button>
-        <button class="pin-key action" data-k="clear">CLR</button><button class="pin-key" data-k="0">0</button><button class="pin-key action" data-k="del">⌫</button>
-    </div>
-    <button class="pin-key action" id="pinCancelBtn" style="display:none;width:auto;height:auto;border-radius:20px;padding:.55rem 1.2rem;margin-top:1.2rem;">CANCEL</button>
-</div>
-
-<!-- EDIT / ADD ENTRY MODAL -->
-<div class="modal-overlay" id="quickModal">
-    <div class="modal-card">
-        <div class="modal-title">
-            <span id="modalProdTitle">Edit Entry</span>
-            <button class="btn btn-sm btn-outline" id="closeModalBtn" style="padding:0.2rem 0.5rem;">✕</button>
-        </div>
-        <div class="edit-only" style="display:none;background:#eef3fa;border-radius:0.6rem;padding:0.4rem 0.6rem;font-size:0.75rem;font-weight:900;color:var(--navy);margin-bottom:0.7rem;text-align:center;">
-            📅 DATE: <span id="modalActiveDateDisplay" style="color:var(--blue);"></span>
-        </div>
-        
-        <div class="modal-group"><label>Item name</label><input type="text" id="modalNameInput"></div>
-        <div class="edit-only" style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-            <div class="modal-group"><label>Date</label><input type="date" id="modalDateInput"></div>
-            <div class="modal-group"><label>Time</label><input type="time" id="modalTimeInput"></div>
-        </div>
-        <!-- LOCATION SELECTOR IN MODAL -->
-        <div class="modal-group">
-            <label>Location</label>
-            <div class="loc-bar" id="modalLocBar" style="margin-bottom:0;">
-                <div class="loc-tab active" data-loc="DUBAI MALL">DUBAI MALL</div>
-                <div class="loc-tab" data-loc="RESIDENCE">RESIDENCE</div>
-                <div class="loc-tab" data-loc="IBN">IBN</div>
-            </div>
-        </div>
-
-        <label class="chk-label" id="modalCatRow" style="display:none;margin:0.2rem 0 0.7rem;"><input type="checkbox" id="modalCatChk" style="width:18px;height:18px;"> <span id="modalCatTxt"></span></label>
-        <div class="modal-group edit-only">
-            <label>Invoice No (INV)</label>
-            <input type="text" id="modalInvInput" placeholder="e.g. INV-001">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-            <div class="modal-group">
-                <label>Quantity</label>
-                <div style="display:flex;gap:0.3rem;"><button type="button" class="btn btn-outline" id="qtyMinus" style="padding:0 1rem;font-size:1.2rem;">−</button><input type="number" id="modalQtyInput" min="1" step="1" value="1" style="text-align:center;"><button type="button" class="btn btn-outline" id="qtyPlus" style="padding:0 1rem;font-size:1.2rem;">+</button></div>
-            </div>
-            <div class="modal-group">
-                <label>Price (AED) <span id="oldPriceRef" style="color:var(--muted);font-weight:700;"></span></label>
-                <input type="number" id="modalPriceInput" step="0.5" min="0">
-            </div>
-        </div>
-        <div class="modal-group edit-only">
-            <label>Remarks / Discrepancy Note</label>
-            <textarea id="modalRemarksInput" rows="2" placeholder="TYPE REMARKS HERE..."></textarea>
-        </div>
-        <div class="modal-group edit-only">
-            <label>Attach Bill Copy (Image)</label>
-            <input type="file" id="modalBillInput" accept="image/*" style="font-size:0.75rem;padding:0.3rem;">
-            <div id="billPreviewContainer" style="margin-top:0.3rem;font-size:0.68rem;color:var(--green);font-weight:800;"></div>
-        </div>
-        <div style="display:flex;gap:0.5rem;margin-top:1rem;">
-            <button class="btn btn-primary btn-block" id="saveModalBtn">CONFIRM & SAVE</button>
-            <button class="btn btn-danger btn-sm" id="deleteModalItemBtn" style="display:none;">REMOVE</button>
-        </div>
-    </div>
-</div>
-
-<!-- MULTI-DATE EXPORT MODAL -->
-<div class="modal-overlay" id="rangeExportModal">
-    <div class="modal-card">
-        <div class="modal-title">
-            <span>EXPORT MULTI-DATE REPORT</span>
-            <button class="btn btn-sm btn-outline" id="closeRangeModalBtn" style="padding:0.2rem 0.5rem;">✕</button>
-        </div>
-        <div class="modal-group">
-            <label>SELECT DATE RANGE</label>
-            <select id="rangeSelect">
-                <option value="last_sent">SINCE LAST SENT DATE TO TODAY</option>
-                <option value="this_month">THIS MONTH (1ST TO TODAY)</option>
-                <option value="custom">DATE TO DATE (CONFIRM DATES)</option>
-            </select>
-        </div>
-        <div id="customDateRow" style="display:none; grid-template-columns:1fr 1fr; gap:0.5rem;">
-            <div class="modal-group">
-                <label>FROM DATE</label>
-                <input type="date" id="rangeStartDate">
-            </div>
-            <div class="modal-group">
-                <label>TO DATE</label>
-                <input type="date" id="rangeEndDate">
-            </div>
-        </div>
-        <div id="rangeSummary" class="small-note" style="margin:0.2rem 0 0;color:var(--navy);"></div>
-        <div style="display:flex;gap:0.5rem;margin-top:0.8rem;">
-            <button class="btn btn-primary btn-block" id="rangeExportCsvBtn">📊 EXPORT CSV</button>
-            <button class="btn btn-green btn-block" id="rangeExportImgBtn">📸 EXPORT IMAGE</button>
-        </div>
-    </div>
-</div>
-
 <div class="app">
+    <!-- TOP BAR WITH FULL UNDO & REDO -->
     <div class="topbar">
-        <div class="topbar-row1">
-            <h1>VYSAKH <span>SALES</span></h1>
-            <button class="lock-btn" id="lockNowBtn" title="Lock App">🔒</button>
+        <div class="brand-title">VYSAKH <span>MASTER</span></div>
+        <div class="undo-redo-bar">
+            <button class="ur-btn" id="undoBtn" disabled title="Undo Last Action">↩️ Undo</button>
+            <button class="ur-btn" id="redoBtn" disabled title="Redo Action">↪️ Redo</button>
         </div>
-        <div class="date-bar">
-            <button class="date-nav-btn" id="prevDayBtn">◀</button>
-            <div class="date-picker-wrap">
-                <span>📅</span>
-                <input type="date" class="date-input" id="activeDatePicker">
-                <button class="today-jump-btn" id="jumpTodayBtn">TODAY</button>
-            </div>
-            <button class="date-nav-btn" id="nextDayBtn">▶</button>
+        <div class="date-strip">
+            <button class="d-btn" id="prevDay">◀</button>
+            <input type="date" id="currentDateInp">
+            <button class="d-btn" id="nextDay">▶</button>
         </div>
     </div>
 
-    <!-- SELL / DASHBOARD TAB -->
-    <div class="panel active" id="panel-sell">
-        
-        <!-- DASHBOARD LOCATION SELECTOR -->
-        <div class="loc-bar" id="dashboardLocBar">
-            <div class="loc-tab active" data-loc="DUBAI MALL">DUBAI MALL</div>
-            <div class="loc-tab" data-loc="RESIDENCE">RESIDENCE</div>
-            <div class="loc-tab" data-loc="IBN">IBN</div>
+    <!-- ==============================================
+         TAB 1: PRODUCT TAP & DAILY ENTRY
+         ============================================== -->
+    <div class="panel active" id="tab-sell">
+        <!-- EDITABLE STORE & LOCATION BAR -->
+        <div class="store-selector-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                <span style="font-size:0.65rem; font-weight:900; color:var(--muted); text-transform:uppercase;">WORKING STORE / SOLD PLACE:</span>
+                <button class="btn btn-sm btn-outline" id="addStoreBtn" style="padding:1px 6px; font-size:0.6rem;">+ Add Store</button>
+            </div>
+            <div class="loc-bar" id="locBar"></div>
         </div>
 
-        <div class="dashboard-tiles" id="dashboardTiles"></div>
-
+        <!-- Compact 1/4 Product Grid + Brand Filter -->
         <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.65rem;">
-                <div style="font-size:0.88rem;font-weight:900;color:var(--navy);">⚡ TAP A MEDICINE TO ADD</div>
-                <div style="font-size:0.68rem;color:var(--muted);font-weight:800;" id="promoCount"></div>
+            <div class="search-row">
+                <input type="text" id="prodSearch" placeholder="🔍 Search medicine or brand…">
+                <button class="btn btn-sm btn-green" id="openNewProdModalBtn">+ Tile</button>
             </div>
-            <div class="search-wrap">
-                <input type="text" id="searchInput" placeholder="SEARCH MEDICINE…">
-                <button class="filter-toggle" id="promoFilterBtn">PROMO</button>
+            <div class="brand-chips" id="brandChips">
+                <span class="b-chip active" data-brand="ALL">ALL</span>
+                <span class="b-chip" data-brand="W-H">W-H</span>
+                <span class="b-chip" data-brand="K-V">K-V</span>
+                <span class="b-chip" data-brand="H-A">H-A</span>
+                <span class="b-chip" data-brand="P-P">P-P</span>
+                <span class="b-chip" data-brand="PAX">PAX</span>
+                <span class="b-chip" data-brand="G-R">G-R</span>
             </div>
-            <div class="grid-products" id="productGrid"></div>
+            <div class="grid-compact" id="compactGrid"></div>
         </div>
 
+        <!-- Today Entries Table (All Fields Directly Editable) -->
         <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;gap:0.4rem;flex-wrap:wrap;">
-                <div style="font-size:0.88rem;font-weight:900;color:var(--navy);" id="salesCardTitle">SALES FOR TODAY</div>
-                <div style="display:flex;gap:0.35rem;">
-                    <button class="btn btn-sm btn-outline" id="clearDayBtn" style="color:var(--red);border-color:#ffd5d5;">CLEAR DATE</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; flex-wrap:wrap; gap:0.3rem;">
+                <span style="font-size:0.78rem; font-weight:900; color:var(--navy);" id="dayTableTitle">ENTRIES FOR TODAY</span>
+                <div style="display:flex; gap:0.25rem;">
+                    <button class="btn btn-sm btn-outline" id="addBlankRowTodayBtn">+ Row</button>
+                    <button class="btn btn-sm btn-wa" id="shareDayWaBtn">💬 WhatsApp</button>
+                    <button class="btn btn-sm btn-outline" id="clearDayBtn" style="color:var(--red);">Clear</button>
                 </div>
             </div>
-            
-            <div class="table-container">
-                <table class="sales-table" id="salesTable">
+            <div class="tbl-wrap">
+                <table class="clean-table">
                     <thead>
                         <tr>
-                            <th>DATE / TIME / LOC</th>
-                            <th>INV</th>
-                            <th>DESCRIPTION</th>
-                            <th>QTY</th>
-                            <th>PRICE</th>
-                            <th>TOTAL</th>
-                            <th>REMARKS</th>
+                            <th>ITEM (TAP TO EDIT)</th>
+                            <th style="width:72px; text-align:center;">QTY</th>
+                            <th style="width:65px; text-align:right;">PRICE</th>
+                            <th style="width:70px; text-align:right;">TOTAL</th>
+                            <th style="width:90px;">SOLD PLACE</th>
+                            <th style="width:24px;"></th>
                         </tr>
                     </thead>
-                    <tbody id="todayTableBody">
-                        <tr><td colspan="7" class="empty-msg">NO SALES FOR THIS DATE.</td></tr>
-                    </tbody>
+                    <tbody id="todayTbody"></tbody>
                 </table>
             </div>
-
-            <div class="summary-box" style="margin-top:0.8rem;">
-                <div>
-                    <div class="lbl">TOTAL</div>
-                    <div class="val" id="todayTotal">0.00</div>
-                </div>
-                <div>
-                    <div class="lbl">AMT</div>
-                    <div class="val" id="todayCommission" style="color:#6ee7b7;">0.00</div>
-                </div>
-                <div class="commission" id="commissionPctBadge">10%</div>
-            </div>
-        </div>
-
-        <div style="display:flex;gap:0.5rem;margin-bottom:0.4rem;">
-            <button class="btn btn-green btn-block" id="exportBtn" style="flex:2;">📸 EXPORT IMAGE</button>
-            <button class="btn btn-outline btn-block" id="exportCsvBtn" style="flex:1;background:white;color:var(--navy);border-color:var(--border);">📊 EXPORT CSV</button>
-        </div>
-        <div class="small-note">DOWNLOADS SUMMARY (GROUPED BY LOCATION)</div>
-    </div>
-
-    <!-- HISTORY TAB -->
-    <div class="panel" id="panel-history">
-        <div class="card">
-            <button class="btn btn-outline btn-block" id="openRangeModalBtn" style="margin-bottom:0.8rem;border-color:var(--blue);color:var(--blue);">📊 EXPORT MULTI-DATE REPORT</button>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.65rem;">
-                <div style="font-size:0.88rem;font-weight:900;color:var(--navy);">📅 ALL SAVED DATES (SORTED)</div>
-            </div>
-            <div id="historyList"></div>
-        </div>
-        <div class="card">
-            <div style="font-size:0.88rem;font-weight:900;color:var(--navy);margin-bottom:0.45rem;">📊 LAST SENT SUMMARY</div>
-            <div id="lastSentBox" style="font-size:0.78rem;color:#2b3e5c;line-height:1.65;font-weight:700;">
-                <div>NO DETAILS SENT YET.</div>
-            </div>
-            <button class="btn btn-primary btn-block" style="margin-top:0.8rem;" id="markSentBtn">✅ MARK SELECTED DATE AS SENT</button>
         </div>
     </div>
 
-    <!-- SETTINGS TAB -->
-    <div class="panel" id="panel-settings">
-        <!-- DEDICATED ADD PRODUCT FORM FIELD -->
-        <div class="card">
-            <div style="font-size:0.88rem;font-weight:900;color:var(--navy);margin-bottom:0.3rem;">➕ ADD NEW MEDICINE</div>
-            <div style="font-size:0.68rem;font-weight:700;color:var(--muted);margin-bottom:0.75rem;">FILL IN DETAILS TO ADD A BRAND NEW ITEM.</div>
-            <div class="add-product-card">
-                <div class="modal-group">
-                    <label>BRAND / GROUP NAME</label>
-                    <input type="text" id="newProdBrandInput" placeholder="e.g. KEENVITA">
-                </div>
-                <div class="modal-group">
-                    <label>PRODUCT DESCRIPTION</label>
-                    <input type="text" id="newProdNameInput" placeholder="e.g. OMEGA 3 2000MG 120 TAB">
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-                    <div class="modal-group">
-                        <label>PRICE (AED)</label>
-                        <input type="number" id="newProdPriceInput" step="0.5" min="0" placeholder="150.00">
-                    </div>
-                    <div class="modal-group" style="display:flex;flex-direction:column;justify-content:flex-end;">
-                        <label class="chk-label" style="padding:0.5rem 0;">
-                            <input type="checkbox" id="newProdPromoChk" style="width:16px;height:16px;"> IS PROMO ITEM?
-                        </label>
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-block" id="addNewProdSubmitBtn" style="margin-top:0.4rem;">SAVE TO CATALOG</button>
+    <!-- ==============================================
+         TAB 2: MASTER LEDGER TABLE (STARTS AT TABLE)
+         ============================================== -->
+    <div class="panel" id="tab-ledger">
+        <div class="card" style="padding:0.5rem; display:flex; justify-content:space-between; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:0.3rem;">
+                <span style="font-size:0.66rem; font-weight:900; color:var(--green);">INCENTIVE:</span>
+                <input type="number" id="globalPctInp" value="10" min="0" max="100" step="0.5" style="width:44px; border:1px solid var(--green-border); border-radius:4px; font-weight:900; font-size:0.74rem; padding:0.2rem; text-align:center; color:var(--navy);">
+                <span style="font-size:0.68rem; font-weight:900; color:var(--green);">%</span>
             </div>
-            <div style="margin-top:0.8rem;">
-                <button class="btn btn-outline btn-block" id="addCustomEntryBtn" style="font-size:0.75rem;padding:0.6rem;">+ ADD CUSTOM TEMPORARY ITEM FOR TODAY</button>
+            <div style="display:flex; gap:0.25rem; flex-wrap:wrap;">
+                <button class="btn btn-sm btn-outline" id="addNewDateGroupBtn">+ Date</button>
+                <button class="btn btn-sm btn-wa" id="shareAllWaBtn">💬 WA All</button>
+                <button class="btn btn-sm btn-green" id="openPasteModalBtn">📥 PASTE</button>
+                <button class="btn btn-sm btn-outline" id="snipJpgBtn">📸 JPG</button>
+                <button class="btn btn-sm btn-outline" id="copyTsvBtn">📋 TSV</button>
+                <button class="btn btn-sm btn-primary" id="exportCsvBtn">📊 CSV</button>
             </div>
         </div>
 
+        <div class="card" id="snipTargetArea" style="padding:0; overflow:hidden;">
+            <div class="tbl-wrap">
+                <table class="clean-table" id="masterTable">
+                    <thead>
+                        <tr>
+                            <th>ITEM (EDITABLE)</th>
+                            <th style="width:72px; text-align:center;">QTY</th>
+                            <th style="width:65px; text-align:right;">UNIT PRICE</th>
+                            <th style="width:70px; text-align:right;">TOTAL</th>
+                            <th style="width:70px; text-align:right; color:var(--green);">INC <span id="pctColHeader">10%</span></th>
+                            <th style="width:70px; text-align:right;">DAY SALES</th>
+                            <th style="width:92px;">SOLD PLACE</th>
+                            <th style="width:22px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledgerTbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==============================================
+         TAB 3: HISTORY & RECONCILIATION
+         ============================================== -->
+    <div class="panel" id="tab-history">
         <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <div style="font-size:0.82rem; font-weight:900; margin-bottom:0.5rem; color:var(--navy);">📊 PAYMENT RECONCILIATION</div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; margin-bottom:0.6rem;">
                 <div>
-                    <div style="font-size:0.88rem;font-weight:900;color:var(--navy);">⚙️ EXISTING MASTER MEDICINES</div>
-                    <div style="font-size:0.66rem;font-weight:700;color:var(--muted);">TAP EMPTY BOX TO UPLOAD PHOTO OR EDIT</div>
+                    <label style="font-size:0.62rem; font-weight:800; color:var(--muted); display:block; margin-bottom:0.15rem;">REPORT SENT UP TO DATE:</label>
+                    <input type="date" id="repSentDate" style="width:100%; border:1px solid var(--border); border-radius:0.45rem; padding:0.35rem; font-size:0.72rem; font-weight:700;">
+                </div>
+                <div>
+                    <label style="font-size:0.62rem; font-weight:800; color:var(--muted); display:block; margin-bottom:0.15rem;">AMOUNT RECEIVED (AED):</label>
+                    <input type="number" id="amtReceivedInp" placeholder="0.00" style="width:100%; border:1px solid var(--green-border); border-radius:0.45rem; padding:0.35rem; font-size:0.72rem; font-weight:900; color:var(--green);">
                 </div>
             </div>
-            <input type="text" id="settingsSearch" placeholder="Search catalogue A–Z…" style="width:100%;border:1.5px solid #d5e0ee;border-radius:.85rem;padding:.6rem .85rem;margin-bottom:.4rem;font-weight:700;">
-            <div id="settingsList"></div>
-            <div class="setting-row" style="border-top:2px solid #e9edf4;margin-top:0.5rem;padding-top:0.7rem;">
-                <label class="chk-label">GLOBAL AMT %</label>
-                <input type="number" id="globalCommission" class="inp-pct" min="0" max="100" step="0.5" value="10">
+
+            <div style="background:var(--green-light); border:1px solid var(--green-border); border-radius:0.6rem; padding:0.5rem; display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center; gap:0.3rem;">
+                <div>
+                    <div style="font-size:0.58rem; color:var(--muted); font-weight:800;">TOTAL INCENTIVE</div>
+                    <div style="font-size:0.8rem; font-weight:900; color:var(--navy);" id="histTotalComm">AED 0.00</div>
+                </div>
+                <div>
+                    <div style="font-size:0.58rem; color:var(--muted); font-weight:800;">RECEIVED</div>
+                    <div style="font-size:0.8rem; font-weight:900; color:var(--green);" id="histReceivedDisplay">AED 0.00</div>
+                </div>
+                <div>
+                    <div style="font-size:0.58rem; color:var(--muted); font-weight:800;">PENDING</div>
+                    <div style="font-size:0.8rem; font-weight:900; color:var(--red);" id="histBalancePending">AED 0.00</div>
+                </div>
             </div>
         </div>
 
         <div class="card">
-            <div style="font-size:0.88rem;font-weight:900;color:var(--navy);margin-bottom:0.5rem;">🔐 PIN LOCK SECURITY</div>
-            <div class="setting-row" style="border-bottom:none;padding:0.2rem 0;">
-                <label class="chk-label">
-                    <input type="checkbox" id="pinEnabledChk" checked> ENABLE PIN LOCK
-                </label>
-                <div style="display:flex;align-items:center;gap:0.35rem;margin-left:auto;">
-                    
-                    <input type="hidden" id="pinCodeInput" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="1234" style="width:74px;text-align:center;font-weight:900;letter-spacing:2px;">
-                    <button class="btn btn-sm btn-primary" id="savePinBtn">CHANGE PIN</button>
-                </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                <span style="font-size:0.75rem; font-weight:900; color:var(--navy);">SAVED DATES BREAKDOWN</span>
+                <button class="btn btn-sm btn-outline" id="wipeAllMasterBtn" style="color:var(--red);">🗑️ Reset All Data</button>
             </div>
-        </div>
-
-        <div class="card">
-            <div style="font-size:0.88rem;font-weight:900;color:var(--navy);margin-bottom:0.5rem;">💾 DATA & BACKUP</div>
-            <button class="btn btn-outline btn-block" id="exportBackupBtn">⬇️ DOWNLOAD FULL BACKUP (JSON)</button>
-            <button class="btn btn-outline btn-block" style="margin-top:0.5rem;" id="importBackupBtn">⬆️ RESTORE FROM BACKUP (JSON)</button>
-            <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
-            <input type="file" id="productImageInput" accept="image/*" style="display:none;">
-            <button class="btn btn-danger btn-block" style="margin-top:0.5rem;" id="resetAllBtn">🗑️ RESET ALL DATA</button>
+            <div id="historyDateList"></div>
         </div>
     </div>
 </div>
 
-<!-- BOTTOM FLOATING PAGE FLIP NAVIGATION BAR -->
-<div class="bottom-nav-bar">
-    <button class="nav-tab-btn active" data-tab="sell">💊 <span>MEDICINES</span></button>
-    <button class="nav-tab-btn" data-tab="history">📅 <span>HISTORY</span></button>
-    <button class="nav-tab-btn" data-tab="settings">⚙️ <span>SETTINGS</span></button>
+<!-- 1-SECOND PAUSE & RECONFIRM POP-UP -->
+<div class="reconfirm-popup" id="reconfirmPopup">
+    <div class="rc-top">
+        <span class="rc-title" id="rcItemTitle">ADDED: WHITE HEALTH MAGNESIUM</span>
+        <span style="font-size:0.7rem; font-weight:900; color:white;" id="rcItemMeta">Qty: 1 · AED 189.00</span>
+    </div>
+    <div class="rc-actions">
+        <div style="display:flex; gap:0.25rem;">
+            <button class="rc-btn rc-btn-undo" id="rcUndoBtn">↩️ Undo</button>
+            <button class="rc-btn rc-btn-step" id="rcMinusBtn">−1 Qty</button>
+            <button class="rc-btn rc-btn-step" id="rcPlusBtn">+1 Qty</button>
+            <button class="rc-btn rc-btn-edit" id="rcEditBtn">✏️ Edit</button>
+        </div>
+        <button class="rc-btn rc-btn-ok" id="rcOkBtn">✓ OK</button>
+    </div>
+    <div class="rc-progress" id="rcProgressBar"></div>
 </div>
 
-<!-- STICKY BOTTOM BAR -->
-<div class="sticky-summary" id="stickySummary">
-    <div class="sticky-inner">
-        <div>
-            <div class="lbl" id="stickyDateLbl">TOTAL</div>
-            <div class="val" id="stickyTotal">0.00</div>
+<!-- QUICK ENTRY EDIT MODAL -->
+<div class="modal-overlay" id="editEntryModal">
+    <div class="modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <strong style="font-size:0.85rem; color:var(--navy);">✏️ EDIT ENTRY DETAILS</strong>
+            <button class="btn btn-sm btn-outline" id="closeEditEntryModalBtn">✕</button>
         </div>
-        <div>
-            <div class="lbl">AMT</div>
-            <div class="val" id="stickyCommission" style="color:#6ee7b7;">0.00</div>
+        <label style="font-size:0.64rem; font-weight:800; color:var(--muted);">ITEM DESCRIPTION</label>
+        <input type="text" id="eeName" class="form-inp">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem;">
+            <div>
+                <label style="font-size:0.64rem; font-weight:800; color:var(--muted);">QUANTITY</label>
+                <input type="number" id="eeQty" class="form-inp" step="any" min="0">
+            </div>
+            <div>
+                <label style="font-size:0.64rem; font-weight:800; color:var(--muted);">UNIT PRICE (AED)</label>
+                <input type="number" id="eePrice" class="form-inp" step="0.5" min="0">
+            </div>
         </div>
-        <div class="commission" id="stickyPct">10%</div>
+        <label style="font-size:0.64rem; font-weight:800; color:var(--muted);">SOLD PLACE / STORE</label>
+        <input type="text" id="eePlace" class="form-inp">
+        <div style="display:flex; justify-content:space-between; gap:0.4rem; margin-top:0.3rem;">
+            <button class="btn btn-sm btn-danger" id="eeDeleteBtn">🗑️ Delete</button>
+            <button class="btn btn-sm btn-green" id="eeSaveBtn">✓ Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- FLOATING NAV -->
+<div class="nav-bar">
+    <button class="nav-btn active" data-tab="sell">💊 <span>ENTRIES</span></button>
+    <button class="nav-btn" data-tab="ledger">📊 <span>LEDGER</span></button>
+    <button class="nav-btn" data-tab="history">💰 <span>HISTORY</span></button>
+</div>
+
+<!-- TSV / CSV PASTE MODAL -->
+<div class="modal-overlay" id="pasteModal">
+    <div class="modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="font-size:0.85rem; color:var(--navy);">📥 PASTE TSV OR CSV DATA</strong>
+            <button class="btn btn-sm btn-outline" id="closePasteModalBtn">✕</button>
+        </div>
+        <div style="font-size:0.66rem; color:var(--muted); margin-top:0.3rem;">Supports your <code>STORE / DATE / ITEM / QTY / UNIT PRICE / SOLD PLACE</code> format or standard TSV rows.</div>
+        <textarea id="pasteRawInput" placeholder="STORE	Residence Tower	DATE	02-04-2026&#10;ITEM	QTY	UNIT PRICE (AED)	TOTAL (AED)	INCENTIVE 10% (AED)	DAY SALES	SOLD PLACE&#10;WHITE HEALTH VITA C-1000 LIPOSOMAL	1	160.00	160.00	16.00	160.00	Residence Tower"></textarea>
+        <div style="display:flex; gap:0.4rem; justify-content:flex-end;">
+            <button class="btn btn-sm btn-outline" id="cancelPasteBtn">Cancel</button>
+            <button class="btn btn-sm btn-green" id="importPasteBtn">Import Data</button>
+        </div>
+    </div>
+</div>
+
+<!-- ADD CUSTOM PRODUCT TILE MODAL -->
+<div class="modal-overlay" id="newProdModal">
+    <div class="modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+            <strong style="font-size:0.85rem; color:var(--navy);">➕ ADD NEW PRODUCT TILE</strong>
+            <button class="btn btn-sm btn-outline" id="closeNewProdModalBtn">✕</button>
+        </div>
+        <label style="font-size:0.65rem; font-weight:800; color:var(--muted);">BRAND SHORT CODE (e.g. W-H, K-V, H-A, P-P, PAX, G-R)</label>
+        <input type="text" id="npBrand" class="form-inp" placeholder="W-H">
+        <label style="font-size:0.65rem; font-weight:800; color:var(--muted);">SHORT TILE NAME</label>
+        <input type="text" id="npShort" class="form-inp" placeholder="MAGNESIUM GLYCINATE">
+        <label style="font-size:0.65rem; font-weight:800; color:var(--muted);">FULL EXPORT ITEM NAME</label>
+        <input type="text" id="npFull" class="form-inp" placeholder="WHITE HEALTH MAGNESIUM GLYCINATE">
+        <label style="font-size:0.65rem; font-weight:800; color:var(--muted);">UNIT PRICE (AED)</label>
+        <input type="number" id="npPrice" class="form-inp" step="0.5" placeholder="189.00">
+        <div style="display:flex; gap:0.4rem; justify-content:flex-end; margin-top:0.3rem;">
+            <button class="btn btn-sm btn-green" id="saveNewProdBtn">Save Tile</button>
+        </div>
     </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<canvas id="exportCanvas" style="display:none;"></canvas>
+<canvas id="jpgCanvas" style="display:none;"></canvas>
 
 <script>
 (function(){
-    const DEFAULT_PRODUCTS = [
-        { id:'p1', brand:'KEENVITA', name:'KEENVITA OMEGA 3 2000MG 120 TAB', price:299.00, promo:false, img:'' },
-        { id:'p2', brand:'KEENVITA', name:'KEENVITA MOVFLEX JOINT CARE 120 TAB', price:299.00, promo:false, img:'' },
-        { id:'p3', brand:'KEENVITA', name:'KEENVITA MULTICOMPLETE', price:225.00, promo:false, img:'' },
-        { id:'p4', brand:'KEENVITA', name:'KEENVITA MAGNESIUM GLYCINATE 500MG 60S', price:189.00, promo:false, img:'' },
-        { id:'p5', brand:'KEENVITA', name:'KEENVITA VITAMIN D3 5000 IU 120 SOFTGELS', price:145.00, promo:false, img:'' },
-        { id:'p6', brand:'KEENVITA', name:'KEENVITA COQ10 200MG 60 CAPSULES', price:260.00, promo:false, img:'' },
-        
-        { id:'p7', brand:'PURITAN\'S PRIDE', name:'PURITAN\'S PRIDE HYDROLYZED COLLAGEN 1000MG 180 TABS', price:165.00, promo:false, img:'' },
-        { id:'p8', brand:'PURITAN\'S PRIDE', name:'PURITAN\'S PRIDE MELATONIN 3MG 120 TABLETS', price:75.00, promo:false, img:'' },
-        { id:'p9', brand:'PURITAN\'S PRIDE', name:'PURITAN\'S PRIDE BIOTIN 10000 MCG 100 SOFTGELS', price:110.00, promo:false, img:'' },
-        { id:'p10', brand:'PURITAN\'S PRIDE', name:'PURITAN\'S PRIDE L-CARNITINE 500MG 60 TABLETS', price:135.00, promo:false, img:'' },
-        { id:'p11', brand:'PURITAN\'S PRIDE', name:'PURITAN\'S PRIDE GLUCOSAMINE CHONDROITIN COMPLEX 90S', price:145.00, promo:false, img:'' },
-        { id:'p12', brand:'PURITAN\'S PRIDE', name:'PURITAN\'S PRIDE VITAMIN C 1000MG WITH ROSE HIPS 100S', price:95.00, promo:false, img:'' },
+    const DEFAULT_CATALOG = [
+        { brand:'W-H', name:'MAGNESIUM GLYCINATE', fullName:'WHITE HEALTH MAGNESIUM GLYCINATE', price:189.00 },
+        { brand:'W-H', name:'MAGNESIUM (PROMO)', fullName:'WHITE HEALTH MAGNESIUM GLYCINATE (SALE)', price:143.50 },
+        { brand:'W-H', name:'PROBIOTIC XTRA', fullName:'WHITE HEALTH PROBIOTIC XTRA', price:310.00 },
+        { brand:'W-H', name:'VITA C-1000 LIPO', fullName:'WHITE HEALTH VITA C-1000 LIPOSOMAL', price:160.00 },
+        { brand:'W-H', name:'SLIM DETOX CAPS', fullName:'WHITE HEALTH SLIM DETOX CAPS', price:189.00 },
+        { brand:'W-H', name:'COQ 10 30S', fullName:'WHITE HEALTH COQ 10 30S', price:229.05 },
+        { brand:'W-H', name:'COQ10 100MG 60S', fullName:'WHITE HEALTH COQ10 100MG 60S', price:240.00 },
+        { brand:'W-H', name:'VIT D3 FORTE', fullName:'WHITE HEALTH VIT D3 FORTE', price:208.00 },
+        { brand:'W-H', name:'OMEGA 3 TRIPLE', fullName:'WHITE HEALTH OMEGA 3 TRIPLE STRENGTH 90S', price:275.00 },
 
-        { id:'p13', brand:'WHITE HEALTH', name:'WHITE HEALTH MAGNESIUM GLYCINATE 400', price:189.00, promo:false, img:'' },
-        { id:'p14', brand:'WHITE HEALTH', name:'WHITE HEALTH MAGNESIUM GLYCINATE (SALE)', price:143.50, promo:true, img:'' },
-        { id:'p15', brand:'WHITE HEALTH', name:'WHITE HEALTH PROBIOTIC XTRA 50 BILLION', price:310.00, promo:false, img:'' },
-        { id:'p16', brand:'WHITE HEALTH', name:'WHITE HEALTH VITA C-1000 LIPOSOMAL', price:160.00, promo:false, img:'' },
-        { id:'p17', brand:'WHITE HEALTH', name:'WHITE HEALTH SLIM DETOX CAPS 30S', price:189.00, promo:false, img:'' },
-        { id:'p18', brand:'WHITE HEALTH', name:'WHITE HEALTH COQ10 100MG 60S', price:240.00, promo:false, img:'' },
-        { id:'p19', brand:'WHITE HEALTH', name:'WHITE HEALTH OMEGA 3 TRIPLE STRENGTH 90S', price:275.00, promo:false, img:'' },
+        { brand:'K-V', name:'OMEGA 3 2000MG', fullName:'KEENVITA OMEGA 3 2000MG', price:299.00 },
+        { brand:'K-V', name:'MOVFLEX JOINT', fullName:'KEENVITA MOVFLEX JOINT CARE', price:299.00 },
+        { brand:'K-V', name:'MULTICOMPLETE', fullName:'KEENVITA MULTICOMPLETE', price:225.00 },
+        { brand:'K-V', name:'MAGNESIUM 500MG', fullName:'KEENVITA MAGNESIUM GLYCINATE 500MG 60S', price:189.00 },
+        { brand:'K-V', name:'VIT D3 5000 IU', fullName:'KEENVITA VITAMIN D3 5000 IU 120 SOFTGELS', price:145.00 },
+        { brand:'K-V', name:'COQ10 200MG', fullName:'KEENVITA COQ10 200MG 60 CAPSULES', price:260.00 },
 
-        { id:'p20', brand:'HEALTH AID', name:'HEALTH AID OSTEZOIN TAB 90S', price:145.00, promo:false, img:'' },
-        { id:'p21', brand:'HEALTH AID', name:'HEALTH AID MAGCITRA TABS 60S', price:95.00, promo:false, img:'' },
-        { id:'p22', brand:'HEALTH AID', name:'HEALTH AID VITAMIN D3 1000IU CAPS 30S', price:65.00, promo:false, img:'' },
-        { id:'p23', brand:'HEALTH AID', name:'HEALTH AID OMEGAZONE PLUS CAPS 30S', price:115.00, promo:false, img:'' },
-        { id:'p24', brand:'HEALTH AID', name:'HEALTH AID CARBOSLIM CAPS 60S', price:155.00, promo:false, img:'' },
-        { id:'p25', brand:'HEALTH AID', name:'HEALTH AID SIBERSLIM TABS 60S', price:160.00, promo:false, img:'' },
-        { id:'p26', brand:'HEALTH AID', name:'HEALTH AID CROMIUM TAB 60S', price:85.00, promo:false, img:'' },
-        { id:'p27', brand:'HEALTH AID', name:'HEALTH AID L ARGININE 500MG TAB 60S', price:135.00, promo:false, img:'' },
-        { id:'p28', brand:'HEALTH AID', name:'HEALTH AID MAGNESIUM BISGLYCINATE 375MG 60S', price:110.00, promo:false, img:'' },
+        { brand:'H-A', name:'HAIR VIT CAPS', fullName:'HEALTH AID HAIR VIT CAPS', price:126.00 },
+        { brand:'H-A', name:'KIDS PROBIO', fullName:'HEALTH AID KIDS PROBIO', price:126.00 },
+        { brand:'H-A', name:'FEMEMVIT TABS', fullName:'HEALTH AID FEMEMVIT TABS', price:126.00 },
+        { brand:'H-A', name:'MAGNESIUM BISGLY', fullName:'HEALTH AID MAGNESIUM BISGLYCINATE', price:200.00 },
+        { brand:'H-A', name:'MAGNESIUM 100', fullName:'HEALTH AID MAGNESIUM BISGLYCINATE', price:100.00 },
+        { brand:'H-A', name:'PSYLLIUM HUSK', fullName:'HEALTH AID PSYLLIUM HUSK', price:152.25 },
+        { brand:'H-A', name:'VITAMIN B50', fullName:'HEALTH AID VITAMIN B50 COMPLEX', price:73.50 },
+        { brand:'H-A', name:'VIT C ORANGE', fullName:'HEALTH AID VIT C 1000MG EFF ORANGE', price:42.50 },
+        { brand:'H-A', name:'VIT C BLKCRNT', fullName:'HEALTH AID VIT C 1000MG EFF BLKCRNT', price:42.34 },
+        { brand:'H-A', name:'ZIMACAL EFF', fullName:'HEALTH AID ZIMACAL EFFERVESCENT', price:100.00 },
+        { brand:'H-A', name:'KIDZ OMEGA LIQ', fullName:'HEALTH AID KIDZ OMEGA LIQUID', price:157.50 },
+        { brand:'H-A', name:'LIVER CARE TAB', fullName:'HEALTH AID LIVER CARE TAB', price:220.50 },
+        { brand:'H-A', name:'OSTEZOIN 90S', fullName:'HEALTH AID OSTEZOIN TAB 90S', price:145.00 },
+        { brand:'H-A', name:'CARBOSLIM 60S', fullName:'HEALTH AID CARBOSLIM CAPS 60S', price:155.00 },
 
-        { id:'p29', brand:'PAXAS / TAUROPAX', name:'TAUROPAX FORCE 60 CAPSULES', price:290.00, promo:false, img:'' },
-        { id:'p30', brand:'PAXAS / TAUROPAX', name:'PAXAS BELLY FAT 120 CAPS', price:210.00, promo:false, img:'' },
-        { id:'p31', brand:'PAXAS / TAUROPAX', name:'PAXAS SLIMMING TABS 20 EFFERVESCENT', price:95.00, promo:false, img:'' },
-        { id:'p32', brand:'PAXAS / TAUROPAX', name:'PAXAS SERENITY SHOTS 60ML', price:45.00, promo:false, img:'' }
+        { brand:'P-P', name:'COLLAGEN 1000MG', fullName:"PURITAN'S PRIDE HYDROLYZED COLLAGEN 1000MG 180 TABS", price:165.00 },
+        { brand:'P-P', name:'MELATONIN 3MG', fullName:"PURITAN'S PRIDE MELATONIN 3MG 120 TABLETS", price:75.00 },
+        { brand:'P-P', name:'BIOTIN 10000MCG', fullName:"PURITAN'S PRIDE BIOTIN 10000 MCG 100 SOFTGELS", price:110.00 },
+        { brand:'P-P', name:'L-CARNITINE 500', fullName:"PURITAN'S PRIDE L-CARNITINE 500MG 60 TABLETS", price:135.00 },
+        { brand:'P-P', name:'GLUCOSAMINE', fullName:"PURITAN'S PRIDE GLUCOSAMINE CHONDROITIN COMPLEX 90S", price:145.00 },
+        { brand:'P-P', name:'VIT C ROSE HIPS', fullName:"PURITAN'S PRIDE VITAMIN C 1000MG WITH ROSE HIPS 100S", price:95.00 },
+
+        { brand:'PAX', name:'TAUROPAX FORCE', fullName:'TAUROPAX FORCE 60 CAPSULES', price:290.00 },
+        { brand:'PAX', name:'BELLY FAT 120S', fullName:'PAXAS BELLY FAT 120 CAPS', price:210.00 },
+        { brand:'PAX', name:'SLIMMING EFF', fullName:'PAXAS SLIMMING TABS 20 EFFERVESCENT', price:95.00 },
+        { brand:'PAX', name:'SERENITY SHOTS', fullName:'PAXAS SERENITY SHOTS 60ML', price:45.00 },
+
+        { brand:'G-R', name:'VIRILE PERFORM', fullName:'GLOW RADIANCE VIRILE ENHA PERFORM', price:252.00 }
     ];
 
-    let products = [];
-    let salesByDate = {}; 
-    let activeDateKey = '';
-    let lastSent = null;
-    let globalCommission = 10;
-    let pinEnabled = true;
-    let pinCode = '1234';
-    let enteredPin = '';
-    let searchQuery = '';
-    let promoOnly = false;
-    let imgUploadTargetIdx = null;
-
-    let activeModalEntryId = null;
-    let activeModalProdId = null;
-    let modalBillDataUrl = '';
-
-    const STORAGE_KEY = 'vysakh_sales_data_v10';
-
-    const productGrid = document.getElementById('productGrid');
-    const dashboardTiles = document.getElementById('dashboardTiles');
-    const todayTableBody = document.getElementById('todayTableBody');
-    const todayTotalEl = document.getElementById('todayTotal');
-    const todayCommissionEl = document.getElementById('todayCommission');
-    const commissionPctBadge = document.getElementById('commissionPctBadge');
-    const activeDatePicker = document.getElementById('activeDatePicker');
-    const jumpTodayBtn = document.getElementById('jumpTodayBtn');
-    const salesCardTitle = document.getElementById('salesCardTitle');
-    const historyListEl = document.getElementById('historyList');
-    const lastSentBox = document.getElementById('lastSentBox');
-    const settingsListEl = document.getElementById('settingsList');
-    const toastEl = document.getElementById('toast');
-    const exportCanvas = document.getElementById('exportCanvas');
-    const promoCountEl = document.getElementById('promoCount');
-    const searchInput = document.getElementById('searchInput');
-    const promoFilterBtn = document.getElementById('promoFilterBtn');
-    const stickySummary = document.getElementById('stickySummary');
-    const stickyDateLbl = document.getElementById('stickyDateLbl');
-    const stickyTotal = document.getElementById('stickyTotal');
-    const stickyCommission = document.getElementById('stickyCommission');
-    const stickyPct = document.getElementById('stickyPct');
-    const globalCommissionInput = document.getElementById('globalCommission');
-    const importFileInput = document.getElementById('importFileInput');
-    const productImageInput = document.getElementById('productImageInput');
-    const pinOverlay = document.getElementById('pinOverlay');
-    const pinDots = document.getElementById('pinDots').querySelectorAll('.pin-dot');
-    const pinEnabledChk = document.getElementById('pinEnabledChk');
-    const pinCodeInput = document.getElementById('pinCodeInput');
-
-    const dashboardLocTabs = document.querySelectorAll('#dashboardLocBar .loc-tab');
-    const modalLocTabs = document.querySelectorAll('#modalLocBar .loc-tab');
-
-    const newProdBrandInput = document.getElementById('newProdBrandInput');
-    const newProdNameInput = document.getElementById('newProdNameInput');
-    const newProdPriceInput = document.getElementById('newProdPriceInput');
-    const newProdPromoChk = document.getElementById('newProdPromoChk');
-    const addNewProdSubmitBtn = document.getElementById('addNewProdSubmitBtn');
-
-    const quickModal = document.getElementById('quickModal');
-    const modalProdTitle = document.getElementById('modalProdTitle');
-    const modalActiveDateDisplay = document.getElementById('modalActiveDateDisplay');
-    const modalInvInput = document.getElementById('modalInvInput');
-    const modalQtyInput = document.getElementById('modalQtyInput');
-    const modalPriceInput = document.getElementById('modalPriceInput');
-    const modalRemarksInput = document.getElementById('modalRemarksInput');
-    const modalBillInput = document.getElementById('modalBillInput');
-    const billPreviewContainer = document.getElementById('billPreviewContainer');
-    const oldPriceRef = document.getElementById('oldPriceRef');
-    const saveModalBtn = document.getElementById('saveModalBtn');
-    const deleteModalItemBtn = document.getElementById('deleteModalItemBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-
-    // MULTI-DATE MODAL ELEMENTS
-    const rangeExportModal = document.getElementById('rangeExportModal');
-    const openRangeModalBtn = document.getElementById('openRangeModalBtn');
-    const closeRangeModalBtn = document.getElementById('closeRangeModalBtn');
-    const rangeSelect = document.getElementById('rangeSelect');
-    const customDateRow = document.getElementById('customDateRow');
-    const rangeStartDate = document.getElementById('rangeStartDate');
-    const rangeEndDate = document.getElementById('rangeEndDate');
-    const rangeExportCsvBtn = document.getElementById('rangeExportCsvBtn');
-    const rangeExportImgBtn = document.getElementById('rangeExportImgBtn');
-
-    function todayKey() {
+    function getTodayIso() {
         const d = new Date();
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
-    function firstOfMonthKey() {
-        const d = new Date();
-        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01';
-    }
-    function currentShiftTime() {
-        const d = new Date();
-        return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-    }
-    function shiftDateKey(key, deltaDays) {
-        const [y,m,d] = key.split('-').map(Number);
-        const dt = new Date(y, m - 1, d);
-        dt.setDate(dt.getDate() + deltaDays);
-        return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
-    }
-    function formatDateDisplay(key) {
-        if (!key) return '—';
-        const [y,m,d] = key.split('-');
-        return d + '/' + m + '/' + y;
-    }
+
+    let catalog = [];
+    let salesData = {};
+    let storeNames = {};
+    let storeList = ['Dubai Mall', 'Residence Tower', 'IBN Battuta'];
+    let activeStore = 'Dubai Mall';
+    let activeDate = getTodayIso();
+    let activeBrandFilter = 'ALL';
+    let globalCommission = 10;
+    let reportSentUpTo = '';
+    let amountReceived = 0;
+
+    let undoStack = [];
+    let redoStack = [];
+    const MAX_HISTORY = 100;
+
+    let lastTapTime = 0;
+    let lastAddedRef = null;
+    let rcTimeout = null;
+
+    const STORAGE_KEY = 'vysakh_clean_master_v2';
+
+    function uid() { return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2,5); }
     function showToast(msg) {
-        toastEl.innerHTML = '';
-        const span = document.createElement('span');
-        span.textContent = msg;
-        toastEl.appendChild(span);
-        toastEl.classList.add('show');
-        clearTimeout(toastEl._t);
-        toastEl._t = setTimeout(() => toastEl.classList.remove('show'), 2800);
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(t._t);
+        t._t = setTimeout(() => t.classList.remove('show'), 2000);
     }
-    function uid() {
-        return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-    }
-    function escapeHtml(s) {
-        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-    
-    function getInitials(name) {
-        const words = (name || '').trim().split(/\s+/);
-        if (words.length >= 2) {
-            return (words[0][0] + words[1][0]).toUpperCase();
-        } else if (words.length === 1 && words[0].length >= 2) {
-            return words[0].substring(0, 2).toUpperCase();
+
+    function formatDisplayDate(isoDate) {
+        if (!isoDate) return '';
+        const parts = isoDate.split('-');
+        if (parts.length === 3 && parts[0].length === 4) {
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
-        return 'P';
+        return isoDate;
     }
 
-    function normTime(t){ const m=/(\d{1,2}):(\d{2})\s*(AM|PM)?/i.exec(t||''); if(!m) return ''; let h=+m[1]; const ap=(m[3]||'').toUpperCase(); if(ap==='PM'&&h<12)h+=12; if(ap==='AM'&&h===12)h=0; return String(h).padStart(2,'0')+':'+m[2]; }
-    function normAllTimes(){ Object.values(salesByDate).forEach(d=>(d.entries||[]).forEach(e=>{ e.time=normTime(e.time)||e.time; })); }
-    function insertSorted(arr,e){ let i=arr.findIndex(x=>(x.time||'')>(e.time||'')); if(i<0)i=arr.length; arr.splice(i,0,e); }
-    function getActiveDateEntries() {
-        if (!salesByDate[activeDateKey]) {
-            salesByDate[activeDateKey] = { entries: [], sent: false, updatedAt: Date.now() };
+    function getFullExportItemName(item) {
+        if (item.fullName) return item.fullName.toUpperCase();
+        const found = catalog.find(c => c.name.toUpperCase() === (item.name || '').toUpperCase());
+        if (found && found.fullName) return found.fullName.toUpperCase();
+        const prefixMap = {
+            'W-H': 'WHITE HEALTH ',
+            'K-V': 'KEENVITA ',
+            'H-A': 'HEALTH AID ',
+            'P-P': "PURITAN'S PRIDE ",
+            'PAX': 'PAXAS ',
+            'G-R': 'GLOW RADIANCE '
+        };
+        const rawName = (item.name || '').toUpperCase();
+        const pref = prefixMap[item.brand] || '';
+        if (pref && !rawName.startsWith(pref.trim())) {
+            return (pref + rawName).trim();
         }
-        if (!Array.isArray(salesByDate[activeDateKey].entries)) {
-            salesByDate[activeDateKey].entries = [];
-        }
-        return salesByDate[activeDateKey].entries;
+        return rawName;
     }
 
-    function saveData() {
-        const data = { products, salesByDate, lastSent, globalCommission, pinEnabled, pinCode };
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-        catch(e) { showToast('STORAGE FULL! TRY SMALLER IMAGES.'); }
-    }
-
-    function loadData() {
-        activeDateKey = todayKey();
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-                const d = JSON.parse(raw);
-                products = d.products && d.products.length ? d.products : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-                salesByDate = d.salesByDate || {};
-                normAllTimes();
-                lastSent = d.lastSent || null;
-                globalCommission = d.globalCommission ?? 10;
-                pinEnabled = d.pinEnabled !== undefined ? d.pinEnabled : true;
-                pinCode = d.pinCode || '1234';
-                return;
-            }
-        } catch(e) { console.warn(e); }
-
-        products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-        salesByDate = {};
-        lastSent = null;
-        globalCommission = 10;
-        pinEnabled = true;
-        pinCode = '1234';
-    }
-
-    function initPinLock() {
-        pinEnabledChk.checked = pinEnabled;
-        if (pinEnabled) lockApp();
-    }
-    function lockApp() { startPin('unlock'); }
-    function updatePinDots(isError) {
-        pinDots.forEach((dot, i) => {
-            dot.classList.toggle('filled', i < enteredPin.length && !isError);
-            dot.classList.toggle('error', !!isError);
-        });
-    }
-    let pinMode='unlock', pinStep='check', pinNew='', pinBusy=false, pinCb=null;
-    const pinSubEl=document.getElementById('pinSubMsg'), pinCancel=document.getElementById('pinCancelBtn');
-    function pinPrompt(sub){ pinSubEl.textContent=sub; enteredPin=''; pinBusy=false; updatePinDots(); }
-    function startPin(mode,cb){
-        pinMode=mode; pinCb=cb||null; pinNew=''; pinCancel.style.display=mode==='unlock'?'none':'block';
-        pinOverlay.classList.add('active');
-        if(mode==='unlock'){ pinStep='check'; pinPrompt('Enter 4-digit PIN to unlock'); }
-        else { pinStep='old'; pinPrompt(mode==='change'?'Enter current PIN':'Enter PIN to turn lock off'); }
-    }
-    function pinFail(msg){ pinBusy=true; updatePinDots(true); setTimeout(()=>pinPrompt(msg),450); }
-    function pinDone(){ pinOverlay.classList.remove('active'); enteredPin=''; const cb=pinCb; pinCb=null; if(cb)cb(); }
-    function pinSubmit(){
-        const p=enteredPin;
-        if(pinStep==='check'||pinStep==='old'){
-            if(p!==pinCode) return pinFail('Wrong PIN, try again');
-            if(pinStep==='check') return setTimeout(pinDone,120);
-            if(pinMode==='disable'){ pinEnabled=false; saveData(); pinEnabledChk.checked=false; setTimeout(pinDone,120); return showToast('PIN LOCK DISABLED'); }
-            pinStep='new'; return setTimeout(()=>pinPrompt('Enter new PIN'),150);
-        }
-        if(pinStep==='new'){ pinNew=p; pinStep='confirm'; return setTimeout(()=>pinPrompt('Confirm new PIN'),150); }
-        if(p!==pinNew){ pinStep='new'; return pinFail('PINs did not match. Enter new PIN'); }
-        pinCode=pinNew; pinEnabled=true; pinEnabledChk.checked=true; saveData(); setTimeout(pinDone,120); showToast('PIN CHANGED');
-    }
-    function pinPress(k){
-        if(pinBusy||!pinOverlay.classList.contains('active')) return;
-        if(k==='clear') enteredPin=''; else if(k==='del') enteredPin=enteredPin.slice(0,-1); else if(enteredPin.length<4) enteredPin+=k;
-        updatePinDots();
-        if(enteredPin.length===4){ pinBusy=true; setTimeout(pinSubmit,150); }
-    }
-    document.querySelectorAll('.pin-key[data-k]').forEach(btn => btn.addEventListener('click', () => pinPress(btn.dataset.k)));
-    document.addEventListener('keydown', e => { if(!pinOverlay.classList.contains('active')) return; if(/^\d$/.test(e.key)) pinPress(e.key); else if(e.key==='Backspace') pinPress('del'); else if(e.key==='Escape'&&pinMode!=='unlock') pinCancel.click(); });
-    pinCancel.addEventListener('click', () => { pinOverlay.classList.remove('active'); pinCb=null; enteredPin=''; pinEnabledChk.checked=pinEnabled; });
-    document.getElementById('lockNowBtn').addEventListener('click', lockApp);
-    pinEnabledChk.addEventListener('change', () => {
-        if(pinEnabledChk.checked){ pinEnabled=true; saveData(); showToast('PIN LOCK ENABLED'); }
-        else { pinEnabledChk.checked=true; startPin('disable'); }
-    });
-    document.getElementById('savePinBtn').addEventListener('click', () => startPin('change'));
-
-    // LOCATION SELECTION LOGIC
-    dashboardLocTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            dashboardLocTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-        });
-    });
-    modalLocTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            modalLocTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-        });
-    });
-
-    function getActiveDashboardLoc() {
-        const activeTab = document.querySelector('#dashboardLocBar .loc-tab.active');
-        return activeTab ? activeTab.dataset.loc : 'DUBAI MALL';
-    }
-
-    let activeModalDate=null, modalMode='edit', modalCat=null;
-    const modalNameInput=document.getElementById('modalNameInput'), modalDateInput=document.getElementById('modalDateInput'), modalTimeInput=document.getElementById('modalTimeInput');
-    const modalCatRow=document.getElementById('modalCatRow'), modalCatChk=document.getElementById('modalCatChk'), modalCatTxt=document.getElementById('modalCatTxt');
-    const openHist=new Set(); let settingsQuery='';
-    document.getElementById('settingsSearch').addEventListener('input', e => { settingsQuery=e.target.value; renderSettings(); });
-
-    // UNDO / REDO with fading pill
-    const undoStack=[], redoStack=[];
-    const undoPill=document.createElement('div'); undoPill.className='undo-pill'; document.body.appendChild(undoPill);
-    function pill(label,btn,fn){
-        undoPill.innerHTML=''; const s=document.createElement('span'); s.textContent=label;
-        const b=document.createElement('button'); b.textContent=btn; b.onclick=fn; undoPill.append(s,b);
-        undoPill.classList.remove('show','fade'); void undoPill.offsetWidth; undoPill.classList.add('show','fade');
-        clearTimeout(undoPill._t); undoPill._t=setTimeout(()=>undoPill.classList.remove('show','fade'),6000);
-    }
-    function checkpoint(label){ undoStack.push(JSON.stringify(salesByDate)); if(undoStack.length>30)undoStack.shift(); redoStack.length=0; pill(label,'UNDO',doUndo); }
-    function doUndo(){ if(!undoStack.length)return; redoStack.push(JSON.stringify(salesByDate)); salesByDate=JSON.parse(undoStack.pop()); saveData(); renderAll(); pill('UNDONE','REDO',doRedo); }
-    function doRedo(){ if(!redoStack.length)return; undoStack.push(JSON.stringify(salesByDate)); salesByDate=JSON.parse(redoStack.pop()); saveData(); renderAll(); pill('REDONE','UNDO',doUndo); }
-
-    function renameAll(pid,name){ Object.values(salesByDate).forEach(d=>(d.entries||[]).forEach(e=>{ if(e.prodId===pid)e.name=name; })); }
-    function setLoc(l){ modalLocTabs.forEach(t=>t.classList.toggle('active',t.dataset.loc===l)); }
-    function getModalLoc(){ return document.querySelector('#modalLocBar .loc-tab.active').dataset.loc; }
-    function setModalMode(m){ modalMode=m; quickModal.querySelectorAll('.edit-only').forEach(el=>{ el.style.display=m==='add'?'none':''; }); deleteModalItemBtn.style.display=m==='edit'?'inline-flex':'none'; }
-
-    function updateCatRow(){
-        const price=parseFloat(modalPriceInput.value)||0, name=modalNameInput.value.trim().toUpperCase();
-        let show=false, txt='', isNew=false;
-        if(modalMode==='add'){
-            if(modalCat&&modalCat.custom){ show=true; isNew=true; txt='SAVE TO CATALOG AS NEW ITEM'; }
-            else if(modalCat){ show=price!==modalCat.price; txt='ALSO UPDATE CATALOG PRICE'; }
-        } else {
-            const p=products.find(x=>x.id===activeModalProdId);
-            if(p){ const n=name!==p.name, pr=price!==p.price; show=n||pr; txt='ALSO UPDATE CATALOG ('+(n?'NAME':'')+(n&&pr?' + ':'')+(pr?'PRICE':'')+')'; }
-            else { show=true; isNew=true; txt='SAVE TO CATALOG AS NEW ITEM'; }
-        }
-        const was=modalCatRow.style.display==='flex';
-        modalCatRow.style.display=show?'flex':'none'; modalCatTxt.textContent=txt;
-        if(!show) modalCatChk.checked=false; else if(!was) modalCatChk.checked=!isNew;
-    }
-    modalNameInput.addEventListener('input',updateCatRow); modalPriceInput.addEventListener('input',updateCatRow);
-    document.getElementById('qtyMinus').addEventListener('click',()=>{ modalQtyInput.value=Math.max(1,(parseInt(modalQtyInput.value,10)||1)-1); });
-    document.getElementById('qtyPlus').addEventListener('click',()=>{ modalQtyInput.value=(parseInt(modalQtyInput.value,10)||1)+1; });
-
-    function openAddModal(prod){
-        setModalMode('add'); modalCat=prod; activeModalEntryId=null; activeModalProdId=prod.id; activeModalDate=activeDateKey;
-        modalProdTitle.textContent='ADD SALE · '+formatDateDisplay(activeDateKey);
-        modalNameInput.value=prod.name; modalNameInput.readOnly=!prod.custom; modalNameInput.placeholder='ITEM NAME';
-        modalQtyInput.value=1; modalPriceInput.value=prod.price;
-        oldPriceRef.textContent=prod.custom?'':'(CATALOG: AED '+prod.price.toFixed(2)+')';
-        setLoc(getActiveDashboardLoc()); saveModalBtn.textContent='ADD TO DAY';
-        modalCatRow.style.display='none'; updateCatRow(); modalBillDataUrl=''; quickModal.classList.add('active');
-    }
-    function openEditModal(entry,dateKey){
-        setModalMode('edit'); modalCat=null; activeModalEntryId=entry.id; activeModalProdId=entry.prodId; activeModalDate=dateKey||activeDateKey;
-        const prod=products.find(p=>p.id===entry.prodId);
-        modalProdTitle.textContent='EDIT ENTRY'; modalActiveDateDisplay.textContent=formatDateDisplay(activeModalDate);
-        modalNameInput.readOnly=false; modalNameInput.value=entry.name; modalDateInput.value=activeModalDate; modalTimeInput.value=normTime(entry.time);
-        modalInvInput.value=entry.inv||''; modalQtyInput.value=entry.qty||1; modalPriceInput.value=entry.price; modalRemarksInput.value=entry.remarks||'';
-        modalBillDataUrl=entry.billImg||''; oldPriceRef.textContent=prod?'(CATALOG: AED '+prod.price.toFixed(2)+')':'(NOT IN CATALOG)';
-        setLoc(entry.loc||'DUBAI MALL'); saveModalBtn.textContent='CONFIRM & SAVE';
-        billPreviewContainer.innerHTML=modalBillDataUrl?'📎 BILL ATTACHED':''; modalBillInput.value='';
-        modalCatRow.style.display='none'; updateCatRow(); quickModal.classList.add('active');
-    }
-    closeModalBtn.addEventListener('click',()=>quickModal.classList.remove('active'));
-    quickModal.addEventListener('click',e=>{ if(e.target===quickModal) quickModal.classList.remove('active'); });
-
-    modalBillInput.addEventListener('change',e=>{
-        const file=e.target.files&&e.target.files[0]; if(!file)return;
-        const r=new FileReader();
-        r.onload=ev=>{ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'),m=600; let w=img.width,h=img.height;
-            if(w>h&&w>m){h=Math.round(h*m/w);w=m;} else if(h>m){w=Math.round(w*m/h);h=m;}
-            c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h); modalBillDataUrl=c.toDataURL('image/jpeg',0.8); billPreviewContainer.innerHTML='📎 BILL ATTACHED SUCCESSFULLY!'; };
-            img.src=ev.target.result; };
-        r.readAsDataURL(file);
-    });
-
-    saveModalBtn.addEventListener('click',()=>{
-        const qty=Math.max(1,parseInt(modalQtyInput.value,10)||1), price=Math.max(0,parseFloat(modalPriceInput.value)||0);
-        const name=modalNameInput.value.trim().toUpperCase(), loc=getModalLoc();
-        if(!name){ showToast('ENTER ITEM NAME'); return; }
-        const catOn=modalCatChk.checked&&modalCatRow.style.display!=='none';
-
-        if(modalMode==='add'){
-            checkpoint('ADDED ×'+qty+' '+name.slice(0,18));
-            let prod=modalCat, pid=prod.id;
-            if(prod.custom){
-                pid=uid();
-                if(catOn){ products.push({id:pid,brand:'GENERAL',name,price,promo:false,img:''}); }
-            } else if(catOn){ prod.price=price; }
-            const dateObj=salesByDate[activeDateKey]||(salesByDate[activeDateKey]={entries:[],sent:false});
-            dateObj.updatedAt=Date.now();
-            const ex=dateObj.entries.find(e=>e.prodId===pid&&!e.remarks&&e.price===price&&e.loc===loc);
-            if(ex) ex.qty+=qty;
-            else dateObj.entries.push({id:uid(),prodId:pid,brand:(prod.brand||'OTHER').toUpperCase(),name,promo:!!prod.promo,time:currentShiftTime(),loc,inv:'INV-'+Math.floor(1000+Math.random()*9000),qty,price,remarks:prod.custom?'MANUAL ENTRY':'',billImg:''});
-            saveData(); quickModal.classList.remove('active'); renderAll(); return;
-        }
-
-        const ds=salesByDate[activeModalDate], entry=ds&&ds.entries.find(e=>e.id===activeModalEntryId);
-        if(!entry){ quickModal.classList.remove('active'); return; }
-        checkpoint('ENTRY UPDATED');
-        const newDate=modalDateInput.value||activeModalDate, newTime=modalTimeInput.value||normTime(entry.time), timeChanged=newTime!==normTime(entry.time);
-        Object.assign(entry,{name,loc,qty,price,time:newTime,inv:(modalInvInput.value.trim()||'INV-001').toUpperCase(),remarks:modalRemarksInput.value.trim().toUpperCase(),billImg:modalBillDataUrl});
-        if(catOn){
-            const p=products.find(x=>x.id===entry.prodId);
-            if(p){ p.price=price; if(p.name!==name){ p.name=name; renameAll(p.id,name); } }
-            else products.push({id:entry.prodId,brand:(entry.brand&&entry.brand!=='CUSTOM')?entry.brand:'GENERAL',name,price,promo:!!entry.promo,img:''});
-        }
-        ds.updatedAt=Date.now();
-        if(newDate!==activeModalDate||timeChanged){
-            ds.entries.splice(ds.entries.indexOf(entry),1);
-            const td=salesByDate[newDate]||(salesByDate[newDate]={entries:[],sent:false});
-            insertSorted(td.entries,entry); td.updatedAt=Date.now();
-            if(newDate!==activeModalDate) showToast('MOVED TO '+formatDateDisplay(newDate));
-        }
-        saveData(); quickModal.classList.remove('active'); renderAll();
-    });
-
-    deleteModalItemBtn.addEventListener('click',()=>{
-        const ds=salesByDate[activeModalDate]; if(!ds)return;
-        const i=ds.entries.findIndex(e=>e.id===activeModalEntryId); if(i<0)return;
-        checkpoint('ENTRY REMOVED'); ds.entries.splice(i,1); ds.updatedAt=Date.now();
-        saveData(); quickModal.classList.remove('active'); renderAll();
-    });
-
-    // MULTI-DATE MODAL LOGIC
-    openRangeModalBtn.addEventListener('click', () => {
-        rangeSelect.value = 'last_sent';
-        customDateRow.style.display = 'none';
-        rangeExportModal.classList.add('active');
-    });
-    closeRangeModalBtn.addEventListener('click', () => rangeExportModal.classList.remove('active'));
-    
-    rangeSelect.addEventListener('change', () => {
-        customDateRow.style.display = rangeSelect.value === 'custom' ? 'grid' : 'none';
-    });
-
-    function getSelectedDateRange(silent) {
-        let start = '';
-        let end = todayKey();
-        if (rangeSelect.value === 'last_sent') {
-            start = lastSent ? lastSent.date : '2000-01-01';
-        } else if (rangeSelect.value === 'this_month') {
-            start = firstOfMonthKey();
-        } else {
-            start = rangeStartDate.value;
-            end = rangeEndDate.value;
-            if (!start || !end) {
-                if(!silent)showToast('PLEASE SELECT BOTH DATES');
-                return null;
-            }
-            if (start > end) {
-                if(!silent)showToast('START DATE MUST BE BEFORE END DATE');
-                return null;
-            }
-        }
-        return { start, end };
-    }
-
-    function getAggregatedEntries(start, end) {
-        let allEntries = [];
-        Object.keys(salesByDate).forEach(dKey => {
-            if (dKey >= start && dKey <= end && salesByDate[dKey].entries) {
-                const dateEntries = salesByDate[dKey].entries.map(e => ({ ...e, activeDate: dKey }));
-                allEntries = allEntries.concat(dateEntries);
-            }
-        });
-        
-        // Sort Date chronologically
-        allEntries.sort((a, b) => {
-            if (a.activeDate !== b.activeDate) return a.activeDate.localeCompare(b.activeDate);
-            return (a.time || '').localeCompare(b.time || '');
-        });
-        return allEntries;
-    }
-
-    rangeExportCsvBtn.addEventListener('click', () => {
-        const range = getSelectedDateRange();
-        if (!range) return;
-        const entries = getAggregatedEntries(range.start, range.end);
-        if (entries.length === 0) {
-            showToast('NO SALES FOUND IN THIS RANGE');
-            return;
-        }
-
-        const groupedByLoc = {};
-        entries.forEach(e => {
-            const loc = (e.loc || 'DUBAI MALL').toUpperCase();
-            if (!groupedByLoc[loc]) groupedByLoc[loc] = [];
-            groupedByLoc[loc].push(e);
-        });
-
-        let csv = "data:text/csv;charset=utf-8,LOCATION,DATE,TIME,INVOICE,BRAND GROUP,PRODUCT DESCRIPTION,CATEGORY,QUANTITY,UNIT PRICE (AED),TOTAL AMOUNT (AED),REMARKS\r\n";
-        
-        for (const [loc, items] of Object.entries(groupedByLoc)) {
-            items.forEach(e => {
-                const cat = e.promo ? 'PROMO' : 'REGULAR';
-                const lineTot = e.price * e.qty;
-                csv += `"${loc}",${formatDateDisplay(e.activeDate)},${e.time || ''},"${e.inv}","${e.brand}","${e.name.replace(/"/g,'""')}",${cat},${e.qty},${e.price.toFixed(2)},${lineTot.toFixed(2)},"${(e.remarks || '').replace(/"/g,'""')}"\r\n`;
-            });
-        }
-        
-        const link = document.createElement("a");
-        link.setAttribute("href", encodeURI(csv));
-        link.setAttribute("download", `VYSAKH-SALES-REPORT-${range.start}-TO-${range.end}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('MULTI-DATE CSV DOWNLOADED');
-        rangeExportModal.classList.remove('active');
-    });
-
-    rangeExportImgBtn.addEventListener('click', () => {
-        const range = getSelectedDateRange();
-        if (!range) return;
-        const entries = getAggregatedEntries(range.start, range.end);
-        if (entries.length === 0) {
-            showToast('NO SALES FOUND IN THIS RANGE');
-            return;
-        }
-
-        const groupedByLoc = {};
-        let grandTotalAmt = 0;
-        let grandTotalComm = 0;
-
-        entries.forEach(e => {
-            const loc = (e.loc || 'DUBAI MALL').toUpperCase();
-            if (!groupedByLoc[loc]) groupedByLoc[loc] = [];
-            groupedByLoc[loc].push(e);
-            
-            const lineTot = e.price * e.qty;
-            grandTotalAmt += lineTot;
-            if (!e.promo) grandTotalComm += lineTot * globalCommission / 100;
-        });
-
-        const locKeys = Object.keys(groupedByLoc);
-        exportCanvas.width = 720;
-        exportCanvas.height = 200 + locKeys.length * 40 + entries.length * 26;
-        const ctx = exportCanvas.getContext('2d');
-        ctx.fillStyle = '#f2f5fa'; ctx.fillRect(0, 0, 720, exportCanvas.height);
-
-        ctx.fillStyle = '#0a1931'; ctx.fillRect(20, 20, 680, 75);
-        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px system-ui';
-        ctx.fillText('VYSAKH CONSOLIDATED SALES', 40, 52);
-        ctx.font = 'bold 12px system-ui';
-        ctx.fillText(`FROM ${formatDateDisplay(range.start)} TO ${formatDateDisplay(range.end)}`, 40, 75);
-
-        let y = 120;
-        
-        for (const [loc, items] of Object.entries(groupedByLoc)) {
-            ctx.fillStyle = '#0a1931'; ctx.font = 'bold 16px system-ui';
-            ctx.textAlign = 'left';
-            ctx.fillText(`LOC: ${loc}`, 35, y);
-            y += 20;
-
-            ctx.fillStyle = '#43648b'; ctx.font = 'bold 11px system-ui';
-            ctx.fillText(`DATE-TIME`, 35, y);
-            ctx.fillText(`DESCRIPTION`, 140, y);
-            ctx.textAlign = 'right';
-            ctx.fillText(`QTY`, 580, y);
-            ctx.fillText(`AMOUNT`, 680, y);
-            ctx.textAlign = 'left';
-            y += 20;
-
-            items.forEach(ent => {
-                ctx.fillStyle = '#1d3149'; ctx.font = 'bold 12px system-ui';
-                ctx.fillText(`${formatDateDisplay(ent.activeDate)} ${ent.time}`, 35, y);
-                ctx.fillText(`[${ent.brand}] ${ent.name}`.substring(0, 55), 140, y);
-                ctx.textAlign = 'right';
-                ctx.fillText(`${ent.qty}`, 580, y);
-                ctx.fillText(`AED ${(ent.price * ent.qty).toFixed(2)}`, 680, y);
-                ctx.textAlign = 'left';
-                y += 24;
-            });
-            y += 10;
-        }
-
-        const footerY = y + 10;
-        ctx.fillStyle = '#0a1931'; ctx.fillRect(20, footerY, 680, 65);
-        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px system-ui';
-        ctx.fillText(`GRAND TOTAL: AED ${grandTotalAmt.toFixed(2)}`, 40, footerY + 38);
-        ctx.textAlign = 'right'; ctx.fillStyle = '#6ee7b7';
-        ctx.fillText(`TOTAL AMT (${globalCommission}%): AED ${grandTotalComm.toFixed(2)}`, 680, footerY + 38);
-
-        const link = document.createElement('a');
-        link.download = `VYSAKH-REPORT-${range.start}-TO-${range.end}.png`;
-        link.href = exportCanvas.toDataURL('image/png');
-        link.click();
-        showToast('MULTI-DATE IMAGE DOWNLOADED');
-        rangeExportModal.classList.remove('active');
-    });
-
-    function openRange(d){ rangeSelect.value='custom'; customDateRow.style.display='grid'; rangeStartDate.value=d; rangeEndDate.value=d; updateRangeSummary(); rangeExportModal.classList.add('active'); }
-    function updateRangeSummary(){
-        const el=document.getElementById('rangeSummary'), r=getSelectedDateRange(true);
-        if(!r){ el.textContent='SELECT BOTH DATES'; return; }
-        const en=getAggregatedEntries(r.start,r.end), tot=en.reduce((s,e)=>s+e.price*e.qty,0);
-        el.textContent='CONFIRM: '+formatDateDisplay(r.start)+' → '+formatDateDisplay(r.end)+' · '+en.length+' ENTRIES · AED '+tot.toFixed(2);
-    }
-    [rangeSelect,rangeStartDate,rangeEndDate].forEach(el=>['change','input'].forEach(ev=>el.addEventListener(ev,updateRangeSummary)));
-    openRangeModalBtn.addEventListener('click',updateRangeSummary);
-
-    historyListEl.addEventListener('click',e=>{
-        const b=e.target.closest('[data-act]'); if(!b)return;
-        const act=b.dataset.act, d=b.dataset.d, ds=salesByDate[d]; if(!ds)return;
-        if(act==='htoggle'){ const el=document.getElementById('hdet-'+d); el.classList.toggle('open'); if(el.classList.contains('open'))openHist.add(d); else openHist.delete(d); }
-        else if(act==='hedit'){ const en=ds.entries.find(x=>x.id===b.dataset.id); if(en)openEditModal(en,d); }
-        else if(act==='hdelent'){ checkpoint('ENTRY REMOVED'); const i=ds.entries.findIndex(x=>x.id===b.dataset.id); if(i>-1)ds.entries.splice(i,1); ds.updatedAt=Date.now(); saveData(); renderAll(); }
-        else if(act==='hopen'){ activeDateKey=d; renderAll(); document.querySelector('[data-tab=sell]').click(); }
-        else if(act==='hexp'){ openRange(d); }
-        else if(act==='hsent'){ const t=calcDateTotals(d); lastSent={date:d,total:t.total,commission:t.commission,commissionPct:globalCommission}; ds.sent=true; saveData(); renderHistory(); renderLastSent(); showToast('MARKED AS SENT'); }
-        else if(act==='hdate'){ if(confirm('DELETE ALL ENTRIES OF '+formatDateDisplay(d)+'?')){ checkpoint('DATE DELETED'); delete salesByDate[d]; saveData(); renderAll(); } }
-    });
-
-    function renderAll() {
-        renderDateHeader();
-        renderDashboardTiles();
-        renderProducts();
-        renderTodayTable();
-        renderSummary();
-        renderHistory();
-        renderLastSent();
-        renderSettings();
-        renderPromoCount();
-        globalCommissionInput.value = globalCommission;
-    }
-
-    function renderDateHeader() {
-        activeDatePicker.value = activeDateKey;
-        const isToday = activeDateKey === todayKey();
-        jumpTodayBtn.classList.toggle('show', !isToday);
-        salesCardTitle.textContent = isToday ? "SALES FOR TODAY" : "SALES FOR " + formatDateDisplay(activeDateKey);
-        stickyDateLbl.textContent = isToday ? "TOTAL (TODAY)" : "TOTAL (" + formatDateDisplay(activeDateKey) + ")";
-    }
-
-    function renderPromoCount() {
-        const promos = products.filter(p => p.promo).length;
-        promoCountEl.textContent = promos + ' PROMO ITEM' + (promos !== 1 ? 'S' : '');
-    }
-
-    function renderDashboardTiles() {
-        if (!products.length) { dashboardTiles.innerHTML = ''; return; }
-        const sold={}; Object.values(salesByDate).forEach(d=>(d.entries||[]).forEach(e=>{sold[e.prodId]=(sold[e.prodId]||0)+e.qty;}));
-        const tilesList = [...products].sort((a,b)=>(sold[b.id]||0)-(sold[a.id]||0)||a.name.localeCompare(b.name)).slice(0,8);
-        dashboardTiles.innerHTML = tilesList.map(p => {
-            const media = p.img ? `<img src="${p.img}" alt="">` : `<span class="dash-tile-placeholder-text">${getInitials(p.name)}</span>`;
-            return `<div class="dash-tile" data-id="${p.id}" title="${escapeHtml(p.name)}">
-                <div class="dash-tile-img">${media}</div>
-                <div class="dash-tile-name">${escapeHtml(p.name)}</div>
-            </div>`;
-        }).join('');
-
-        dashboardTiles.querySelectorAll('.dash-tile').forEach(tile => {
-            tile.addEventListener('click', (e) => {
-                quickAddProduct(tile.dataset.id, e);
-            });
-        });
-    }
-
-    function renderProducts() {
-        let list = [...products].sort((a,b)=>a.name.localeCompare(b.name));
-        if (searchQuery.trim()) {
-            const q = searchQuery.trim().toLowerCase();
-            list = list.filter(p => p.name.toLowerCase().includes(q) || (p.brand && p.brand.toLowerCase().includes(q)));
-        }
-        if (promoOnly) list = list.filter(p => p.promo);
-        if (list.length === 0) {
-            productGrid.innerHTML = '<div class="empty-msg" style="grid-column:1/-1;">NO MEDICINES MATCH.</div>';
-            return;
-        }
-        const entries = getActiveDateEntries();
-        productGrid.innerHTML = list.map(p => {
-            const badge = p.promo ? '<span class="pbadge">PROMO</span>' : '';
-            const totalQty = entries.filter(e => e.prodId === p.id).reduce((sum, e) => sum + e.qty, 0);
-            const qtyBadge = totalQty > 0 ? `<span class="qty-tap-badge">×${totalQty}</span>` : '';
-            const media = p.img ? `<img src="${p.img}" alt="${escapeHtml(p.name)}">` : `<span class="pimg-placeholder-text">${getInitials(p.name)}</span>`;
-            return `<div class="product-tile${p.promo ? ' promo' : ''}" data-id="${p.id}">
-                ${qtyBadge}
-                ${badge}
-                <div class="pimg-box">${media}</div>
-                <div class="pname">${escapeHtml(p.name)}</div>
-                <div class="pprice">AED ${p.price.toFixed(2)}</div>
-            </div>`;
-        }).join('');
-
-        productGrid.querySelectorAll('.product-tile').forEach(el => {
-            el.addEventListener('click', (e) => {
-                quickAddProduct(el.dataset.id, e);
-            });
-        });
-    }
-
-    function quickAddProduct(prodId) { const p = products.find(x => x.id === prodId); if (p) openAddModal(p); }
-
-    function renderTodayTable() {
-        const entries = getActiveDateEntries();
-        if (entries.length === 0) {
-            todayTableBody.innerHTML = `<tr><td colspan="7" class="empty-msg">NO ENTRIES FOR ${formatDateDisplay(activeDateKey)} — TAP A MEDICINE ABOVE.</td></tr>`;
-            return;
-        }
-
-        let html = '';
-        entries.forEach((ent) => {
-            const lineTotal = (ent.price * ent.qty).toFixed(2);
-            const promoTag = ent.promo ? ' <span style="color:#20a766;font-weight:800;font-size:0.6rem;">[PROMO]</span>' : '';
-            const billIcon = ent.billImg ? ' 📎' : '';
-            const brandHeader = ent.brand ? `<div style="font-size:0.58rem;color:var(--blue);font-weight:800;">[${escapeHtml(ent.brand)}]</div>` : '';
-            html += `<tr class="table-row-item" data-id="${ent.id}" style="cursor:pointer;" title="TAP TO EDIT ENTRY">
-                <td>${formatDateDisplay(activeDateKey)}<br><span style="font-size:0.6rem;color:var(--muted);font-weight:800;">${ent.time || 'SHIFT 1'} • ${ent.loc || 'DUBAI MALL'}</span></td>
-                <td><strong>${escapeHtml(ent.inv || '—')}</strong></td>
-                <td>${brandHeader}${escapeHtml(ent.name)}${promoTag}${billIcon}</td>
-                <td><strong>×${ent.qty}</strong></td>
-                <td>AED ${ent.price.toFixed(2)}</td>
-                <td><strong style="color:var(--blue);">AED ${lineTotal}</strong></td>
-                <td style="font-size:0.68rem;color:#43648b;">${escapeHtml(ent.remarks || '—')}</td>
-            </tr>`;
-        });
-        todayTableBody.innerHTML = html;
-
-        todayTableBody.querySelectorAll('tr[data-id]').forEach(row => {
-            row.addEventListener('click', () => {
-                const entryId = row.dataset.id;
-                const entry = entries.find(e => e.id === entryId);
-                if (entry) openEditModal(entry, activeDateKey);
-            });
-        });
-    }
-
-    function calcDateTotals(dateKey) {
-        const obj = salesByDate[dateKey];
-        if (!obj || !Array.isArray(obj.entries)) return { total: 0, commission: 0, count: 0 };
-        let total = 0, commission = 0, count = 0;
-        obj.entries.forEach(ent => {
-            const lineTotal = ent.price * ent.qty;
-            total += lineTotal;
-            count += ent.qty;
-            if (!ent.promo) commission += lineTotal * globalCommission / 100;
-        });
-        return { total: +total.toFixed(2), commission: +commission.toFixed(2), count };
-    }
-
-    function renderSummary() {
-        const { total, commission, count } = calcDateTotals(activeDateKey);
-        todayTotalEl.textContent = total.toFixed(2);
-        todayCommissionEl.textContent = commission.toFixed(2);
-        commissionPctBadge.textContent = globalCommission + '%';
-        stickyTotal.textContent = total.toFixed(2);
-        stickyCommission.textContent = commission.toFixed(2);
-        stickyPct.textContent = globalCommission + '%';
-        const onSell = document.getElementById('panel-sell').classList.contains('active');
-        stickySummary.classList.toggle('show', count > 0 && onSell);
-    }
-
-    function renderHistory() {
-        const validDates = Object.keys(salesByDate)
-            .filter(d => calcDateTotals(d).count > 0)
-            .sort((a, b) => b.localeCompare(a));
-
-        if (validDates.length === 0) {
-            historyListEl.innerHTML = '<div class="empty-msg">NO SAVED HISTORY YET.</div>';
-            return;
-        }
-
-        historyListEl.innerHTML = validDates.map((dKey) => {
-            const obj = salesByDate[dKey];
-            const { total, commission, count } = calcDateTotals(dKey);
-            const sentMark = obj.sent ? ' ✅' : '';
-            const detailRows = obj.entries.map(ent => `
-                <div class="h-line">
-                    <span style="flex:1"><strong>[${escapeHtml(ent.loc || 'DUBAI MALL')}]</strong> ${escapeHtml(ent.name)} ×${ent.qty}<br><span style="font-size:0.62rem;color:var(--muted)">${escapeHtml(ent.time||'')} · AED ${ent.price.toFixed(2)} each</span></span>
-                    <span style="color:var(--blue);font-weight:900;">AED ${(ent.price * ent.qty).toFixed(2)}</span>
-                    <span style="display:flex;gap:0.3rem;"><button class="btn btn-sm btn-outline" data-act="hedit" data-d="${dKey}" data-id="${ent.id}">✏️</button><button class="btn btn-sm btn-danger" data-act="hdelent" data-d="${dKey}" data-id="${ent.id}">🗑️</button></span>
-                </div>`).join('');
-
-            return `<div class="history-item" data-act="htoggle" data-d="${dKey}">
-                <span class="history-date">${formatDateDisplay(dKey)}${sentMark}</span>
-                <span>${count} ITEMS</span>
-                <span class="history-total">AED ${total.toFixed(2)}</span>
-                <span class="history-comm">AMT ${commission.toFixed(2)}</span>
+    // ==============================================
+    // STORE BAR MANAGER & RENDERER
+    // ==============================================
+    function renderStoreBar() {
+        const bar = document.getElementById('locBar');
+        bar.innerHTML = storeList.map(st => `
+            <div class="loc-tab ${st === activeStore ? 'active' : ''}" data-store="${st}">
+                <span class="store-click-lbl">${st}</span>
+                ${storeList.length > 1 ? `<span class="del-store" data-del="${st}" title="Delete Store">✕</span>` : ''}
             </div>
-            <div class="history-detail${openHist.has(dKey)?' open':''}" id="hdet-${dKey}">
-                ${detailRows}
-                <div class="history-actions" style="flex-wrap:wrap;"><button class="btn btn-sm btn-primary" data-act="hopen" data-d="${dKey}">OPEN DAY</button><button class="btn btn-sm btn-outline" data-act="hexp" data-d="${dKey}">EXPORT</button><button class="btn btn-sm btn-green" data-act="hsent" data-d="${dKey}">MARK SENT</button><button class="btn btn-sm btn-danger" data-act="hdate" data-d="${dKey}">DELETE DAY</button></div>
-            </div>`;
-        }).join('');
-    }
+        `).join('');
 
-    function renderLastSent() {
-        if (!lastSent) { lastSentBox.innerHTML = '<div>NO DETAILS SENT YET.</div>'; return; }
-        lastSentBox.innerHTML = `
-            <div><strong>LAST SENT DATE:</strong> ${formatDateDisplay(lastSent.date)}</div>
-            <div><strong>TOTAL SALES:</strong> AED ${lastSent.total.toFixed(2)}</div>
-            <div><strong>AMT (${lastSent.commissionPct ?? globalCommission}%):</strong> AED ${lastSent.commission.toFixed(2)}</div>
-        `;
-    }
+        bar.querySelectorAll('.store-click-lbl').forEach(span => {
+            span.addEventListener('click', () => {
+                activeStore = span.parentElement.dataset.store;
+                renderStoreBar();
+            });
+        });
 
-    function renderSettings() {
-        if (!products.length) { settingsListEl.innerHTML = '<div class="empty-msg">NO MEDICINES ADDED YET.</div>'; return; }
-        const q=settingsQuery.trim().toLowerCase();
-        settingsListEl.innerHTML = products.map((p,i)=>i).filter(i=>!q||(products[i].name+' '+(products[i].brand||'')).toLowerCase().includes(q)).sort((a,b)=>products[a].name.localeCompare(products[b].name)).map(idx => { const p = products[idx];
-            const thumb = p.img ? `<img src="${p.img}" alt="">` : `<span style="font-weight:900;">${getInitials(p.name)}</span>`;
-            return `<div class="setting-row" data-idx="${idx}">
-                <button type="button" class="setting-img-btn" title="UPLOAD PHOTO">${thumb}<span class="edit-lbl">EDIT</span></button>
-                <input type="text" class="inp-name" value="${escapeHtml(p.name)}" placeholder="MEDICINE NAME">
-                <input type="number" class="inp-price" value="${p.price}" step="0.5" min="0" placeholder="PRICE">
-                <label class="chk-label"><input type="checkbox" class="inp-promo" ${p.promo ? 'checked' : ''}> PROMO</label>
-                <button class="btn btn-sm btn-danger del-prod-btn" title="DELETE">✕</button>
-            </div>`;
-        }).join('');
-
-        settingsListEl.querySelectorAll('.setting-row').forEach(row => {
-            const idx = parseInt(row.dataset.idx, 10);
-            const imgBtn = row.querySelector('.setting-img-btn');
-            const nameInp = row.querySelector('.inp-name');
-            const priceInp = row.querySelector('.inp-price');
-            const promoChk = row.querySelector('.inp-promo');
-            const delBtn = row.querySelector('.del-prod-btn');
-
-            imgBtn.addEventListener('click', () => { imgUploadTargetIdx = idx; productImageInput.value = ''; productImageInput.click(); });
-            nameInp.addEventListener('change', () => { const nn=(nameInp.value.trim() || 'MEDICINE').toUpperCase(); renameAll(products[idx].id,nn); products[idx].name=nn; saveData(); renderAll(); showToast('CATALOG + ENTRIES UPDATED'); });
-            priceInp.addEventListener('change', () => { products[idx].price = Math.max(0, parseFloat(priceInp.value) || 0); saveData(); renderAll(); });
-            promoChk.addEventListener('change', () => { products[idx].promo = promoChk.checked; saveData(); renderAll(); });
-            delBtn.addEventListener('click', () => {
-                if (confirm('DELETE "' + products[idx].name + '"?')) {
-                    products.splice(idx, 1);
+        bar.querySelectorAll('.del-store').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const st = btn.dataset.del;
+                if (confirm(`Remove store "${st}"?`)) {
+                    recordActionSnapshot();
+                    storeList = storeList.filter(s => s !== st);
+                    if (activeStore === st) activeStore = storeList[0] || 'Store 1';
                     saveData();
-                    renderAll();
+                    renderStoreBar();
+                }
+            });
+        });
+
+        bar.querySelectorAll('.loc-tab').forEach(tab => {
+            tab.addEventListener('dblclick', () => {
+                const oldName = tab.dataset.store;
+                const newName = prompt('Rename store name:', oldName);
+                if (newName && newName.trim() && newName.trim() !== oldName) {
+                    recordActionSnapshot();
+                    const clean = newName.trim();
+                    const idx = storeList.indexOf(oldName);
+                    if (idx !== -1) storeList[idx] = clean;
+                    if (activeStore === oldName) activeStore = clean;
+                    // update existing store names in sales data
+                    Object.keys(salesData).forEach(d => {
+                        if (storeNames[d] === oldName) storeNames[d] = clean;
+                        (salesData[d] || []).forEach(it => { if (it.place === oldName) it.place = clean; });
+                    });
+                    saveData();
+                    renderStoreBar();
+                    refreshAllViews();
                 }
             });
         });
     }
 
-    document.getElementById('addCustomEntryBtn').addEventListener('click', () => openAddModal({id:null,custom:true,name:'',price:0,brand:'CUSTOM',promo:false}));
-
-    addNewProdSubmitBtn.addEventListener('click', () => {
-        const brand = (newProdBrandInput.value.trim() || 'GENERAL').toUpperCase();
-        const name = newProdNameInput.value.trim().toUpperCase();
-        const price = parseFloat(newProdPriceInput.value);
-        const promo = newProdPromoChk.checked;
-
-        if (!name) {
-            showToast('PLEASE ENTER MEDICINE NAME');
-            newProdNameInput.focus();
-            return;
+    document.getElementById('addStoreBtn').addEventListener('click', () => {
+        const name = prompt('Enter new store or pharmacy name:');
+        if (name && name.trim()) {
+            recordActionSnapshot();
+            const clean = name.trim();
+            if (!storeList.includes(clean)) storeList.push(clean);
+            activeStore = clean;
+            saveData();
+            renderStoreBar();
         }
-        if (isNaN(price) || price < 0) {
-            showToast('PLEASE ENTER VALID PRICE');
-            newProdPriceInput.focus();
-            return;
-        }
-
-        const newProduct = {
-            id: uid(),
-            brand,
-            name,
-            price,
-            promo,
-            img: ''
-        };
-
-        products.push(newProduct);
-        saveData();
-        renderAll();
-
-        newProdBrandInput.value = '';
-        newProdNameInput.value = '';
-        newProdPriceInput.value = '';
-        newProdPromoChk.checked = false;
-        showToast('SUCCESSFULLY ADDED ' + name);
     });
 
-    productImageInput.addEventListener('change', (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file || imgUploadTargetIdx === null) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 200; canvas.height = 200;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 200, 200);
-                const minSide = Math.min(img.width, img.height);
-                ctx.drawImage(img, (img.width - minSide)/2, (img.height - minSide)/2, minSide, minSide, 0, 0, 200, 200);
-                products[imgUploadTargetIdx].img = canvas.toDataURL('image/jpeg', 0.78);
-                saveData(); renderAll();
-                showToast('MEDICINE PHOTO UPDATED');
-            };
-            img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-
-    function exportCsv() {
-        const entries = getActiveDateEntries();
-        if (entries.length === 0) { showToast('NO ENTRIES TO EXPORT AS CSV'); return; }
-
-        const groupedByLoc = {};
-        entries.forEach(e => {
-            const loc = (e.loc || 'DUBAI MALL').toUpperCase();
-            if (!groupedByLoc[loc]) groupedByLoc[loc] = [];
-            groupedByLoc[loc].push(e);
+    // ==============================================
+    // UNDO / REDO ENGINE
+    // ==============================================
+    function getStateSnapshot() {
+        return JSON.stringify({
+            salesData,
+            storeNames,
+            storeList,
+            activeStore,
+            globalCommission,
+            reportSentUpTo,
+            amountReceived
         });
-
-        let csv = "data:text/csv;charset=utf-8,LOCATION,DATE,TIME,INVOICE,BRAND GROUP,PRODUCT DESCRIPTION,CATEGORY,QUANTITY,UNIT PRICE (AED),TOTAL AMOUNT (AED),REMARKS\r\n";
-        
-        for (const [loc, items] of Object.entries(groupedByLoc)) {
-            items.forEach(e => {
-                const cat = e.promo ? 'PROMO' : 'REGULAR';
-                const lineTot = e.price * e.qty;
-                csv += `"${loc}",${formatDateDisplay(activeDateKey)},${e.time || ''},"${e.inv}","${e.brand}","${e.name.replace(/"/g,'""')}",${cat},${e.qty},${e.price.toFixed(2)},${lineTot.toFixed(2)},"${(e.remarks || '').replace(/"/g,'""')}"\r\n`;
-            });
-        }
-
-        const link = document.createElement("a");
-        link.setAttribute("href", encodeURI(csv));
-        link.setAttribute("download", `VYSAKH-SALES-${activeDateKey}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('CSV DOWNLOADED');
     }
 
-    function exportTodayImage() {
-        const entries = getActiveDateEntries();
-        if (entries.length === 0) { showToast('NO SALES TO EXPORT'); return; }
-        const { total, commission } = calcDateTotals(activeDateKey);
+    function applyStateSnapshot(snapStr) {
+        const parsed = JSON.parse(snapStr);
+        salesData = parsed.salesData || {};
+        storeNames = parsed.storeNames || {};
+        storeList = parsed.storeList || ['Dubai Mall', 'Residence Tower', 'IBN Battuta'];
+        activeStore = parsed.activeStore || storeList[0];
+        globalCommission = parsed.globalCommission ?? 10;
+        reportSentUpTo = parsed.reportSentUpTo || '';
+        amountReceived = parsed.amountReceived || 0;
+        saveData();
+        renderStoreBar();
+        refreshAllViews();
+    }
 
-        const groupedByLoc = {};
-        entries.forEach(e => {
-            const loc = (e.loc || 'DUBAI MALL').toUpperCase();
-            if (!groupedByLoc[loc]) groupedByLoc[loc] = [];
-            groupedByLoc[loc].push(e);
+    function recordActionSnapshot() {
+        undoStack.push(getStateSnapshot());
+        if (undoStack.length > MAX_HISTORY) undoStack.shift();
+        redoStack = [];
+        updateUndoRedoButtons();
+    }
+
+    function updateUndoRedoButtons() {
+        document.getElementById('undoBtn').disabled = undoStack.length === 0;
+        document.getElementById('redoBtn').disabled = redoStack.length === 0;
+    }
+
+    function performUndo() {
+        if (!undoStack.length) return;
+        redoStack.push(getStateSnapshot());
+        const prev = undoStack.pop();
+        applyStateSnapshot(prev);
+        updateUndoRedoButtons();
+        hideReconfirmPopup();
+        showToast('↩️ Undid Last Action');
+    }
+
+    function performRedo() {
+        if (!redoStack.length) return;
+        undoStack.push(getStateSnapshot());
+        const next = redoStack.pop();
+        applyStateSnapshot(next);
+        updateUndoRedoButtons();
+        hideReconfirmPopup();
+        showToast('↪️ Redid Action');
+    }
+
+    document.getElementById('undoBtn').addEventListener('click', performUndo);
+    document.getElementById('redoBtn').addEventListener('click', performRedo);
+
+    function refreshAllViews() {
+        renderTodayTable();
+        renderMasterLedger();
+        renderHistoryTab();
+    }
+
+    function initData() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                catalog = parsed.catalog && parsed.catalog.length ? parsed.catalog : JSON.parse(JSON.stringify(DEFAULT_CATALOG));
+                salesData = parsed.salesData || {};
+                storeNames = parsed.storeNames || {};
+                storeList = parsed.storeList || ['Dubai Mall', 'Residence Tower', 'IBN Battuta'];
+                activeStore = parsed.activeStore || storeList[0];
+                globalCommission = parsed.globalCommission ?? 10;
+                reportSentUpTo = parsed.reportSentUpTo || '';
+                amountReceived = parsed.amountReceived || 0;
+                return;
+            } catch(e){}
+        }
+        catalog = JSON.parse(JSON.stringify(DEFAULT_CATALOG));
+        salesData = {};
+        storeNames = {};
+        storeList = ['Dubai Mall', 'Residence Tower', 'IBN Battuta'];
+        activeStore = 'Dubai Mall';
+    }
+
+    function saveData() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            catalog, salesData, storeNames, storeList, activeStore, globalCommission, reportSentUpTo, amountReceived
+        }));
+    }
+
+    // ==============================================
+    // 1-SECOND PAUSE & RECONFIRM POP-UP BAR
+    // ==============================================
+    const reconfirmPopup = document.getElementById('reconfirmPopup');
+    const rcItemTitle = document.getElementById('rcItemTitle');
+    const rcItemMeta = document.getElementById('rcItemMeta');
+
+    function showReconfirmPopup(dateKey, entryId) {
+        lastAddedRef = { dateKey, entryId };
+        updateReconfirmPopupContent();
+        reconfirmPopup.classList.add('show');
+        clearTimeout(rcTimeout);
+        rcTimeout = setTimeout(() => {
+            reconfirmPopup.classList.remove('show');
+        }, 4500);
+    }
+
+    function updateReconfirmPopupContent() {
+        if (!lastAddedRef) return;
+        const list = salesData[lastAddedRef.dateKey] || [];
+        const entry = list.find(e => e.id === lastAddedRef.entryId);
+        if (!entry) {
+            hideReconfirmPopup();
+            return;
+        }
+        rcItemTitle.textContent = `✓ [${entry.brand}] ${entry.name}`;
+        rcItemMeta.textContent = `Qty: ${entry.qty} · AED ${(entry.qty * entry.price).toFixed(2)}`;
+    }
+
+    function hideReconfirmPopup() {
+        reconfirmPopup.classList.remove('show');
+        clearTimeout(rcTimeout);
+    }
+
+    document.getElementById('rcUndoBtn').addEventListener('click', performUndo);
+    document.getElementById('rcMinusBtn').addEventListener('click', () => {
+        if (!lastAddedRef) return;
+        const list = salesData[lastAddedRef.dateKey] || [];
+        const entry = list.find(e => e.id === lastAddedRef.entryId);
+        if (!entry) return;
+        recordActionSnapshot();
+        if (entry.qty > 1) {
+            entry.qty -= 1;
+            saveData();
+            refreshAllViews();
+            updateReconfirmPopupContent();
+        } else {
+            salesData[lastAddedRef.dateKey] = list.filter(e => e.id !== lastAddedRef.entryId);
+            saveData();
+            refreshAllViews();
+            hideReconfirmPopup();
+        }
+    });
+    document.getElementById('rcPlusBtn').addEventListener('click', () => {
+        if (!lastAddedRef) return;
+        const list = salesData[lastAddedRef.dateKey] || [];
+        const entry = list.find(e => e.id === lastAddedRef.entryId);
+        if (!entry) return;
+        recordActionSnapshot();
+        entry.qty += 1;
+        saveData();
+        refreshAllViews();
+        updateReconfirmPopupContent();
+    });
+    document.getElementById('rcEditBtn').addEventListener('click', () => {
+        if (!lastAddedRef) return;
+        hideReconfirmPopup();
+        openEditEntryModal(lastAddedRef.dateKey, lastAddedRef.entryId);
+    });
+    document.getElementById('rcOkBtn').addEventListener('click', hideReconfirmPopup);
+
+    // ==============================================
+    // EDIT ENTRY MODAL
+    // ==============================================
+    const editEntryModal = document.getElementById('editEntryModal');
+    let editingTarget = null;
+
+    function openEditEntryModal(dateKey, entryId) {
+        const list = salesData[dateKey] || [];
+        const entry = list.find(e => e.id === entryId);
+        if (!entry) return;
+        editingTarget = { dateKey, entryId };
+        document.getElementById('eeName').value = getFullExportItemName(entry);
+        document.getElementById('eeQty').value = entry.qty;
+        document.getElementById('eePrice').value = entry.price;
+        document.getElementById('eePlace').value = entry.place || storeNames[dateKey] || activeStore;
+        editEntryModal.classList.add('active');
+    }
+
+    document.getElementById('closeEditEntryModalBtn').addEventListener('click', () => editEntryModal.classList.remove('active'));
+    document.getElementById('eeSaveBtn').addEventListener('click', () => {
+        if (!editingTarget) return;
+        const list = salesData[editingTarget.dateKey] || [];
+        const entry = list.find(e => e.id === editingTarget.entryId);
+        if (!entry) return;
+
+        recordActionSnapshot();
+        const newName = document.getElementById('eeName').value.trim().toUpperCase() || entry.name;
+        entry.fullName = newName;
+        entry.name = newName;
+        entry.qty = parseFloat(document.getElementById('eeQty').value) || 1;
+        entry.price = parseFloat(document.getElementById('eePrice').value) || 0;
+        entry.place = document.getElementById('eePlace').value.trim() || activeStore;
+
+        saveData();
+        refreshAllViews();
+        editEntryModal.classList.remove('active');
+        showToast('Entry Updated!');
+    });
+    document.getElementById('eeDeleteBtn').addEventListener('click', () => {
+        if (!editingTarget) return;
+        recordActionSnapshot();
+        salesData[editingTarget.dateKey] = (salesData[editingTarget.dateKey] || []).filter(e => e.id !== editingTarget.entryId);
+        saveData();
+        refreshAllViews();
+        editEntryModal.classList.remove('active');
+        showToast('Entry Deleted');
+    });
+
+    // ==============================================
+    // PRODUCT GRID & ANTI-DOUBLE-CLICK GUARD
+    // ==============================================
+    function renderProductGrid(filter = '') {
+        const grid = document.getElementById('compactGrid');
+        const q = filter.trim().toLowerCase();
+        const items = catalog.filter(p => {
+            const matchBrand = activeBrandFilter === 'ALL' || p.brand === activeBrandFilter;
+            const matchQuery = !q || p.name.toLowerCase().includes(q) || (p.fullName && p.fullName.toLowerCase().includes(q)) || p.brand.toLowerCase().includes(q);
+            return matchBrand && matchQuery;
         });
-
-        const locKeys = Object.keys(groupedByLoc);
-        exportCanvas.width = 720;
-        exportCanvas.height = 180 + locKeys.length * 40 + entries.length * 26;
-        const ctx = exportCanvas.getContext('2d');
-        ctx.fillStyle = '#f2f5fa'; ctx.fillRect(0, 0, 720, exportCanvas.height);
-
-        ctx.fillStyle = '#0a1931'; ctx.fillRect(20, 20, 680, 75);
-        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px system-ui';
-        ctx.fillText('VYSAKH SALES SUMMARY', 40, 52);
-        ctx.font = 'bold 12px system-ui';
-        ctx.textAlign = 'right'; ctx.fillText(formatDateDisplay(activeDateKey), 680, 52);
-
-        let y = 120;
         
-        for (const [loc, items] of Object.entries(groupedByLoc)) {
-            ctx.fillStyle = '#0a1931'; ctx.font = 'bold 16px system-ui';
-            ctx.textAlign = 'left';
-            ctx.fillText(`LOC: ${loc}`, 35, y);
-            y += 20;
+        grid.innerHTML = items.map((p) => `
+            <div class="tile-compact" data-idx="${catalog.indexOf(p)}">
+                <div class="tile-brand">${p.brand}</div>
+                <div class="tile-name">${p.name}</div>
+                <div class="tile-price">AED ${p.price.toFixed(2)}</div>
+            </div>
+        `).join('');
 
-            ctx.fillStyle = '#43648b'; ctx.font = 'bold 11px system-ui';
-            ctx.fillText(`DATE-TIME`, 35, y);
-            ctx.fillText(`DESCRIPTION`, 140, y);
-            ctx.textAlign = 'right';
-            ctx.fillText(`QTY`, 580, y);
-            ctx.fillText(`AMOUNT`, 680, y);
-            ctx.textAlign = 'left';
-            y += 20;
+        grid.querySelectorAll('.tile-compact').forEach(tile => {
+            tile.addEventListener('click', () => {
+                const nowMs = Date.now();
+                if (nowMs - lastTapTime < 450) return;
+                lastTapTime = nowMs;
 
-            items.forEach(ent => {
-                ctx.fillStyle = '#1d3149'; ctx.font = 'bold 12px system-ui';
-                ctx.fillText(`${formatDateDisplay(activeDateKey)} ${ent.time}`, 35, y);
-                ctx.fillText(`[${ent.brand}] ${ent.name}`.substring(0, 55), 140, y);
-                ctx.textAlign = 'right';
-                ctx.fillText(`${ent.qty}`, 580, y);
-                ctx.fillText(`AED ${(ent.price * ent.qty).toFixed(2)}`, 680, y);
-                ctx.textAlign = 'left';
-                y += 24;
+                tile.classList.add('just-tapped');
+                setTimeout(() => tile.classList.remove('just-tapped'), 700);
+
+                const item = catalog[parseInt(tile.dataset.idx, 10)];
+                if (item) addQuickItem(item);
             });
-            y += 10;
+        });
+    }
+
+    function addQuickItem(item) {
+        recordActionSnapshot();
+        if (!salesData[activeDate]) salesData[activeDate] = [];
+        const place = activeStore;
+        if (!storeNames[activeDate]) storeNames[activeDate] = place;
+
+        const now = new Date();
+        const timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+        let targetEntry = salesData[activeDate].find(e => e.name === item.name && e.price === item.price && (e.place || storeNames[activeDate]) === place);
+        if (targetEntry) {
+            targetEntry.qty += 1;
+        } else {
+            targetEntry = {
+                id: uid(),
+                time: timeStr,
+                brand: item.brand,
+                name: item.name,
+                fullName: item.fullName || item.name,
+                qty: 1,
+                price: item.price,
+                place: place
+            };
+            salesData[activeDate].push(targetEntry);
+        }
+        saveData();
+        renderTodayTable();
+        setTimeout(() => showReconfirmPopup(activeDate, targetEntry.id), 150);
+    }
+
+    // TODAY TABLE
+    function renderTodayTable() {
+        document.getElementById('currentDateInp').value = activeDate;
+        document.getElementById('dayTableTitle').textContent = `ENTRIES: ${formatDisplayDate(activeDate)}`;
+
+        const tbody = document.getElementById('todayTbody');
+        const list = salesData[activeDate] || [];
+        const defaultStore = storeNames[activeDate] || activeStore;
+
+        if (!list.length) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.2rem; color:var(--muted); font-size:0.74rem;">No entries for ${formatDisplayDate(activeDate)}. Tap a product tile above or click "+ Row".</td></tr>`;
+            return;
         }
 
-        const footerY = y + 10;
-        ctx.fillStyle = '#0a1931'; ctx.fillRect(20, footerY, 680, 65);
-        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px system-ui';
-        ctx.fillText(`GRAND TOTAL: AED ${total.toFixed(2)}`, 40, footerY + 38);
-        ctx.textAlign = 'right'; ctx.fillStyle = '#6ee7b7';
-        ctx.fillText(`TOTAL AMT (${globalCommission}%): AED ${commission.toFixed(2)}`, 680, footerY + 38);
+        tbody.innerHTML = list.map(item => `
+            <tr data-id="${item.id}">
+                <td>
+                    <div style="display:flex; align-items:center; gap:3px;">
+                        <span style="color:var(--green); font-size:0.6rem; font-weight:900;">[${item.brand || 'GEN'}]</span>
+                        <input type="text" class="cell-inp today-name-inp" value="${getFullExportItemName(item)}">
+                    </div>
+                </td>
+                <td style="text-align:center;">
+                    <div style="display:inline-flex; align-items:center; gap:2px;">
+                        <button class="step-btn today-step-sub">−</button>
+                        <input type="number" step="any" class="cell-inp num-inp today-qty-inp" style="width:34px;" value="${item.qty}">
+                        <button class="step-btn today-step-add">+</button>
+                    </div>
+                </td>
+                <td><input type="number" step="0.5" class="cell-inp num-inp today-price-inp" style="width:54px;" value="${item.price.toFixed(2)}"></td>
+                <td style="text-align:right; font-weight:800; color:var(--navy);">${(item.qty * item.price).toFixed(2)}</td>
+                <td><input type="text" class="cell-inp today-place-inp" value="${item.place || defaultStore}"></td>
+                <td style="text-align:center;"><button class="btn btn-sm btn-outline today-del-btn" style="color:var(--red); padding:1px 5px;">✕</button></td>
+            </tr>
+        `).join('');
+
+        tbody.querySelectorAll('tr[data-id]').forEach(row => {
+            const id = row.dataset.id;
+            const entry = list.find(e => e.id === id);
+
+            row.querySelector('.today-name-inp').addEventListener('change', (e) => {
+                recordActionSnapshot();
+                const val = e.target.value.trim().toUpperCase();
+                entry.name = val;
+                entry.fullName = val;
+                saveData();
+                renderTodayTable();
+            });
+            row.querySelector('.today-step-sub').addEventListener('click', () => {
+                recordActionSnapshot();
+                if (entry.qty > 1) { entry.qty -= 1; }
+                else { salesData[activeDate] = list.filter(e => e.id !== id); }
+                saveData(); renderTodayTable();
+            });
+            row.querySelector('.today-step-add').addEventListener('click', () => {
+                recordActionSnapshot();
+                entry.qty += 1; saveData(); renderTodayTable();
+            });
+            row.querySelector('.today-qty-inp').addEventListener('change', (e) => {
+                recordActionSnapshot();
+                entry.qty = parseFloat(e.target.value) || 0; saveData(); renderTodayTable();
+            });
+            row.querySelector('.today-price-inp').addEventListener('change', (e) => {
+                recordActionSnapshot();
+                entry.price = parseFloat(e.target.value) || 0; saveData(); renderTodayTable();
+            });
+            row.querySelector('.today-place-inp').addEventListener('change', (e) => {
+                recordActionSnapshot();
+                entry.place = e.target.value.trim(); saveData();
+            });
+            row.querySelector('.today-del-btn').addEventListener('click', () => {
+                recordActionSnapshot();
+                salesData[activeDate] = list.filter(e => e.id !== id);
+                saveData(); renderTodayTable();
+            });
+        });
+    }
+
+    document.getElementById('addBlankRowTodayBtn').addEventListener('click', () => {
+        recordActionSnapshot();
+        if (!salesData[activeDate]) salesData[activeDate] = [];
+        const place = activeStore;
+        const def = catalog[0];
+        salesData[activeDate].push({
+            id: uid(),
+            time: '12:00',
+            brand: def.brand,
+            name: def.name,
+            fullName: def.fullName,
+            qty: 1,
+            price: def.price,
+            place: place
+        });
+        saveData();
+        renderTodayTable();
+    });
+
+    // ==============================================
+    // MASTER LEDGER TABLE
+    // ==============================================
+    function renderMasterLedger() {
+        document.getElementById('pctColHeader').textContent = globalCommission + '%';
+        const tbody = document.getElementById('ledgerTbody');
+        const dates = Object.keys(salesData).filter(d => (salesData[d] || []).length > 0).sort();
+
+        if (!dates.length) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:1.6rem; color:var(--muted);">Master Ledger is empty. Tap products on the Entries tab, click "+ Date", or use "📥 PASTE".</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        let grandQty = 0;
+        let grandTot = 0;
+
+        dates.forEach(dKey => {
+            const entries = salesData[dKey] || [];
+            const displayDate = formatDisplayDate(dKey);
+            const storeName = storeNames[dKey] || entries[0]?.place || activeStore;
+
+            html += `
+                <tr>
+                    <td colspan="8" style="padding:0;">
+                        <div class="ledger-date-header">
+                            <div class="store-inp-wrap">
+                                <span>STORE:</span>
+                                <input type="text" class="store-live-inp" data-date="${dKey}" value="${storeName}" placeholder="Store Name">
+                            </div>
+                            <span class="ledger-date-txt">DATE: ${displayDate}</span>
+                            <div style="display:flex; gap:0.25rem;">
+                                <button class="btn btn-sm btn-wa ledger-wa-day-btn" data-date="${dKey}">💬 WA</button>
+                                <button class="btn btn-sm btn-outline ledger-add-item-btn" data-date="${dKey}">+ Item</button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            let dayQty = 0;
+            let dayTot = 0;
+
+            entries.forEach(item => {
+                const total = item.qty * item.price;
+                const pctAmt = total * (globalCommission / 100);
+                dayQty += item.qty;
+                dayTot += total;
+                const soldPlace = item.place || storeName;
+
+                html += `
+                    <tr data-date="${dKey}" data-id="${item.id}">
+                        <td>
+                            <div style="display:flex; align-items:center; gap:3px;">
+                                <span style="font-size:0.58rem; color:var(--green); font-weight:900;">[${item.brand || 'W-H'}]</span>
+                                <input type="text" class="cell-inp led-name" value="${getFullExportItemName(item)}">
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            <div style="display:inline-flex; align-items:center; gap:2px;">
+                                <button class="step-btn led-sub">−</button>
+                                <input type="number" step="any" class="cell-inp num-inp led-qty" style="width:32px;" value="${item.qty}">
+                                <button class="step-btn led-add">+</button>
+                            </div>
+                        </td>
+                        <td><input type="number" step="0.5" class="cell-inp num-inp led-price" style="width:52px;" value="${item.price.toFixed(2)}"></td>
+                        <td style="text-align:right; font-weight:800; color:var(--navy);">${total.toFixed(2)}</td>
+                        <td style="text-align:right; font-weight:800; color:var(--green);">${pctAmt.toFixed(2)}</td>
+                        <td style="text-align:right; font-weight:800; color:var(--navy);">${total.toFixed(2)}</td>
+                        <td><input type="text" class="cell-inp led-place" value="${soldPlace}"></td>
+                        <td style="text-align:center;"><button class="btn btn-sm btn-outline led-del" style="color:var(--red); padding:0 3px;">✕</button></td>
+                    </tr>
+                `;
+            });
+
+            grandQty += dayQty;
+            grandTot += dayTot;
+
+            const dayPctTot = dayTot * (globalCommission / 100);
+            html += `
+                <tr class="subtotal-line">
+                    <td style="font-weight:900;">TOTAL</td>
+                    <td style="text-align:center;">${dayQty % 1 === 0 ? dayQty : dayQty.toFixed(2)}</td>
+                    <td></td>
+                    <td style="text-align:right;">${dayTot.toFixed(2)}</td>
+                    <td style="text-align:right; color:var(--green);">${dayPctTot.toFixed(2)}</td>
+                    <td style="text-align:right;">${dayTot.toFixed(2)}</td>
+                    <td colspan="2"></td>
+                </tr>
+            `;
+        });
+
+        const grandPctTot = grandTot * (globalCommission / 100);
+        html += `
+            <tr class="grandtotal-line">
+                <td>GRAND TOTAL (ALL DATES)</td>
+                <td style="text-align:center;">${grandQty % 1 === 0 ? grandQty : grandQty.toFixed(2)}</td>
+                <td></td>
+                <td style="text-align:right;">AED ${grandTot.toFixed(2)}</td>
+                <td style="text-align:right; color:#a7f3d0;">AED ${grandPctTot.toFixed(2)}</td>
+                <td style="text-align:right;">AED ${grandTot.toFixed(2)}</td>
+                <td colspan="2"></td>
+            </tr>
+        `;
+
+        tbody.innerHTML = html;
+        bindLedgerLiveEvents();
+    }
+
+    function bindLedgerLiveEvents() {
+        document.querySelectorAll('.store-live-inp').forEach(inp => {
+            inp.addEventListener('change', () => {
+                recordActionSnapshot();
+                const dKey = inp.dataset.date;
+                const newStore = inp.value.trim();
+                storeNames[dKey] = newStore;
+                (salesData[dKey] || []).forEach(it => { it.place = newStore; });
+                saveData();
+                renderMasterLedger();
+            });
+        });
+
+        document.querySelectorAll('.ledger-wa-day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openWhatsAppShare(buildWhatsAppMessage([btn.dataset.date]));
+            });
+        });
+
+        document.querySelectorAll('.ledger-add-item-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                recordActionSnapshot();
+                const dKey = btn.dataset.date;
+                const def = catalog[0];
+                const st = storeNames[dKey] || activeStore;
+                salesData[dKey].push({
+                    id: uid(),
+                    time: '12:00',
+                    brand: def.brand,
+                    name: def.name,
+                    fullName: def.fullName,
+                    qty: 1,
+                    price: def.price,
+                    place: st
+                });
+                saveData();
+                renderMasterLedger();
+            });
+        });
+
+        document.querySelectorAll('#ledgerTbody tr[data-id]').forEach(row => {
+            const dKey = row.dataset.date;
+            const id = row.dataset.id;
+            const entry = salesData[dKey]?.find(e => e.id === id);
+            if (!entry) return;
+
+            row.querySelector('.led-sub').addEventListener('click', () => {
+                recordActionSnapshot();
+                if (entry.qty > 1) { entry.qty -= 1; }
+                else { salesData[dKey] = salesData[dKey].filter(e => e.id !== id); }
+                saveData(); renderMasterLedger();
+            });
+            row.querySelector('.led-add').addEventListener('click', () => {
+                recordActionSnapshot();
+                entry.qty += 1; saveData(); renderMasterLedger();
+            });
+            row.querySelector('.led-qty').addEventListener('change', (e) => {
+                recordActionSnapshot();
+                entry.qty = parseFloat(e.target.value) || 0; saveData(); renderMasterLedger();
+            });
+            row.querySelector('.led-price').addEventListener('change', (e) => {
+                recordActionSnapshot();
+                entry.price = parseFloat(e.target.value) || 0; saveData(); renderMasterLedger();
+            });
+            row.querySelector('.led-name').addEventListener('change', (e) => {
+                recordActionSnapshot();
+                const val = e.target.value.trim().toUpperCase();
+                entry.fullName = val;
+                entry.name = val;
+                saveData();
+            });
+            row.querySelector('.led-place').addEventListener('change', (e) => {
+                recordActionSnapshot();
+                entry.place = e.target.value.trim(); saveData();
+            });
+            row.querySelector('.led-del').addEventListener('click', () => {
+                recordActionSnapshot();
+                salesData[dKey] = salesData[dKey].filter(e => e.id !== id);
+                saveData(); renderMasterLedger();
+            });
+        });
+    }
+
+    document.getElementById('addNewDateGroupBtn').addEventListener('click', () => {
+        const dInput = prompt('Enter Date (DD-MM-YYYY or YYYY-MM-DD):', formatDisplayDate(activeDate));
+        if (!dInput) return;
+        const iso = toIsoDate(dInput);
+        recordActionSnapshot();
+        if (!salesData[iso]) salesData[iso] = [];
+        const def = catalog[0];
+        const st = storeNames[iso] || activeStore;
+        salesData[iso].push({
+            id: uid(),
+            time: '12:00',
+            brand: def.brand,
+            name: def.name,
+            fullName: def.fullName,
+            qty: 1,
+            price: def.price,
+            place: st
+        });
+        saveData();
+        renderMasterLedger();
+    });
+
+    // ==============================================
+    // WHATSAPP DIRECT SHARE FORMATTER
+    // ==============================================
+    function buildWhatsAppMessage(datesList) {
+        let lines = [];
+        let grandTotalSales = 0;
+        let grandTotalIncentive = 0;
+        let grandTotalQty = 0;
+
+        datesList.forEach(dKey => {
+            const list = salesData[dKey] || [];
+            if (!list.length) return;
+
+            const dispDate = formatDisplayDate(dKey);
+            const store = storeNames[dKey] || list[0]?.place || activeStore;
+
+            lines.push(`*STORE:* ${store}  |  *DATE:* ${dispDate}`);
+            lines.push(`-----------------------------------------`);
+
+            let dayQty = 0;
+            let dayTotal = 0;
+            let dayIncentive = 0;
+
+            list.forEach(item => {
+                const fullItemName = getFullExportItemName(item);
+                const tot = item.qty * item.price;
+                const inc = tot * (globalCommission / 100);
+                const soldPlace = item.place || store;
+
+                dayQty += item.qty;
+                dayTotal += tot;
+                dayIncentive += inc;
+
+                lines.push(`• *${fullItemName}*`);
+                lines.push(`   Qty: ${item.qty}  |  Unit: ${item.price.toFixed(2)}  |  *Total: AED ${tot.toFixed(2)}*`);
+                lines.push(`   Incentive (${globalCommission}%): AED ${inc.toFixed(2)}  |  Place: ${soldPlace}`);
+            });
+
+            lines.push(`-----------------------------------------`);
+            lines.push(`*DAY TOTAL:* Qty: ${dayQty}  |  *Sales: AED ${dayTotal.toFixed(2)}*  |  *Incentive: AED ${dayIncentive.toFixed(2)}*`);
+            lines.push(``);
+
+            grandTotalQty += dayQty;
+            grandTotalSales += dayTotal;
+            grandTotalIncentive += dayIncentive;
+        });
+
+        if (datesList.length > 1) {
+            lines.push(`=========================================`);
+            lines.push(`*GRAND TOTAL (${datesList.length} DAYS)*`);
+            lines.push(`Total Units: *${grandTotalQty}*`);
+            lines.push(`Total Sales: *AED ${grandTotalSales.toFixed(2)}*`);
+            lines.push(`Total Incentive (${globalCommission}%): *AED ${grandTotalIncentive.toFixed(2)}*`);
+        }
+
+        return lines.join('\n');
+    }
+
+    function openWhatsAppShare(text) {
+        if (!text.trim()) {
+            showToast('No sales entries to share!');
+            return;
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    document.getElementById('shareDayWaBtn').addEventListener('click', () => {
+        const list = salesData[activeDate] || [];
+        if (!list.length) { showToast('No entries for selected date!'); return; }
+        openWhatsAppShare(buildWhatsAppMessage([activeDate]));
+    });
+
+    document.getElementById('shareAllWaBtn').addEventListener('click', () => {
+        const dates = Object.keys(salesData).filter(d => (salesData[d] || []).length > 0).sort();
+        if (!dates.length) { showToast('No entries in ledger!'); return; }
+        openWhatsAppShare(buildWhatsAppMessage(dates));
+    });
+
+    // ==============================================
+    // EXACT FORMAT BUILDER FOR CSV AND TSV
+    // ==============================================
+    function buildFormattedReport(sep) {
+        const isCsv = sep === ',';
+        const esc = (val) => {
+            const s = String(val ?? '');
+            if (isCsv && (s.includes(',') || s.includes('"'))) {
+                return `"${s.replace(/"/g, '""')}"`;
+            }
+            return s;
+        };
+
+        let out = '';
+        const dates = Object.keys(salesData).filter(d => (salesData[d] || []).length > 0).sort();
+
+        dates.forEach((dKey, idx) => {
+            const list = salesData[dKey] || [];
+            const dispDate = formatDisplayDate(dKey);
+            const store = storeNames[dKey] || list[0]?.place || activeStore;
+
+            out += [esc('STORE'), esc(store), esc('DATE'), esc(dispDate), '', '', ''].join(sep) + '\r\n';
+            out += [
+                esc('ITEM'),
+                esc('QTY'),
+                esc('UNIT PRICE (AED)'),
+                esc('TOTAL (AED)'),
+                esc(`INCENTIVE ${globalCommission}% (AED)`),
+                esc('DAY SALES'),
+                esc('SOLD PLACE')
+            ].join(sep) + '\r\n';
+
+            let dayQty = 0;
+            let dayTotal = 0;
+            let dayIncentive = 0;
+
+            list.forEach(item => {
+                const fullItemName = getFullExportItemName(item);
+                const tot = item.qty * item.price;
+                const inc = tot * (globalCommission / 100);
+                const soldPlace = item.place || store;
+
+                dayQty += item.qty;
+                dayTotal += tot;
+                dayIncentive += inc;
+
+                out += [
+                    esc(fullItemName),
+                    esc(item.qty % 1 === 0 ? item.qty : item.qty.toFixed(2)),
+                    esc(item.price.toFixed(2)),
+                    esc(tot.toFixed(2)),
+                    esc(inc.toFixed(2)),
+                    esc(tot.toFixed(2)),
+                    esc(soldPlace)
+                ].join(sep) + '\r\n';
+            });
+
+            out += [
+                esc('TOTAL'),
+                esc(dayQty % 1 === 0 ? dayQty : dayQty.toFixed(2)),
+                '',
+                esc(dayTotal.toFixed(2)),
+                esc(dayIncentive.toFixed(2)),
+                esc(dayTotal.toFixed(2)),
+                ''
+            ].join(sep) + '\r\n';
+
+            if (idx < dates.length - 1) out += '\r\n';
+        });
+
+        return out;
+    }
+
+    document.getElementById('copyTsvBtn').addEventListener('click', () => {
+        const tsv = buildFormattedReport('\t');
+        if (!tsv.trim()) { showToast('No data to copy!'); return; }
+        navigator.clipboard.writeText(tsv).then(() => showToast('Formatted TSV Copied!'));
+    });
+
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+        const csv = buildFormattedReport(',');
+        if (!csv.trim()) { showToast('No data to export!'); return; }
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `VYSAKH-SALES-${formatDisplayDate(activeDate)}.csv`;
+        link.click();
+        showToast('Formatted CSV Downloaded!');
+    });
+
+    // ==============================================
+    // TSV / CSV PASTE IMPORTER
+    // ==============================================
+    const pasteModal = document.getElementById('pasteModal');
+    document.getElementById('openPasteModalBtn').addEventListener('click', () => {
+        document.getElementById('pasteRawInput').value = '';
+        pasteModal.classList.add('active');
+    });
+    document.getElementById('closePasteModalBtn').addEventListener('click', () => pasteModal.classList.remove('active'));
+    document.getElementById('cancelPasteBtn').addEventListener('click', () => pasteModal.classList.remove('active'));
+
+    function toIsoDate(dStr) {
+        if (!dStr) return activeDate;
+        const p = dStr.trim().split(/[-/]/);
+        if (p.length === 3 && p[0].length === 2 && p[2].length === 4) {
+            return `${p[2]}-${p[1]}-${p[0]}`;
+        }
+        return dStr.trim();
+    }
+
+    function detectBrandAndShort(descRaw) {
+        const up = descRaw.toUpperCase();
+        let brand = 'GEN';
+        let short = up;
+        if (up.includes('WHITE HEALTH')) { brand = 'W-H'; short = up.replace('WHITE HEALTH', '').trim(); }
+        else if (up.includes('KEENVITA')) { brand = 'K-V'; short = up.replace('KEENVITA', '').trim(); }
+        else if (up.includes('HEALTH AID')) { brand = 'H-A'; short = up.replace('HEALTH AID', '').trim(); }
+        else if (up.includes('PURITAN')) { brand = 'P-P'; short = up.replace(/PURITAN'S PRIDE|PURITANS PRIDE/g, '').trim(); }
+        else if (up.includes('PAXAS') || up.includes('TAUROPAX')) { brand = 'PAX'; }
+        else if (up.includes('GLOW RADIANCE')) { brand = 'G-R'; short = up.replace('GLOW RADIANCE', '').trim(); }
+        return { brand, short, fullName: up };
+    }
+
+    document.getElementById('importPasteBtn').addEventListener('click', () => {
+        const text = document.getElementById('pasteRawInput').value.trim();
+        if (!text) { showToast('Please paste data first!'); return; }
+
+        recordActionSnapshot();
+        const lines = text.split(/\r?\n/);
+        let importedCount = 0;
+        let currentBlockDate = activeDate;
+        let currentBlockStore = activeStore;
+
+        lines.forEach(line => {
+            const raw = line.trim();
+            if (!raw) return;
+            const parts = (line.includes('\t') ? line.split('\t') : line.split(',')).map(s => s.replace(/^"|"$/g, '').trim());
+
+            if (parts[0] && parts[0].toUpperCase() === 'STORE') {
+                currentBlockStore = parts[1] || activeStore;
+                if (!storeList.includes(currentBlockStore)) storeList.push(currentBlockStore);
+                const dateIdx = parts.findIndex(p => p.toUpperCase() === 'DATE');
+                if (dateIdx !== -1 && parts[dateIdx + 1]) {
+                    currentBlockDate = toIsoDate(parts[dateIdx + 1]);
+                }
+                storeNames[currentBlockDate] = currentBlockStore;
+                return;
+            }
+
+            const firstCol = (parts[0] || '').toUpperCase();
+            if (firstCol === 'ITEM' || firstCol === 'DATE' || firstCol === 'TOTAL' || firstCol.startsWith('GRAND TOTAL')) return;
+
+            if (/^\d{2,4}[-/]\d{2}[-/]\d{2,4}$/.test(parts[0]) && parts.length >= 5) {
+                const isoDate = toIsoDate(parts[0]);
+                const timeRaw = parts[1];
+                const descRaw = parts[2];
+                const qtyRaw = parseFloat(parts[3]);
+                const priceRaw = parseFloat(parts[4]);
+                if (!isNaN(qtyRaw) && !isNaN(priceRaw) && descRaw.toUpperCase() !== 'NO SALES RECORDED') {
+                    const info = detectBrandAndShort(descRaw);
+                    if (!salesData[isoDate]) salesData[isoDate] = [];
+                    salesData[isoDate].push({
+                        id: uid(),
+                        time: timeRaw || '12:00',
+                        brand: info.brand,
+                        name: info.short,
+                        fullName: info.fullName,
+                        qty: qtyRaw,
+                        price: priceRaw,
+                        place: storeNames[isoDate] || currentBlockStore
+                    });
+                    importedCount++;
+                }
+                return;
+            }
+
+            if (parts.length >= 3) {
+                const descRaw = parts[0];
+                const qtyRaw = parseFloat(parts[1]);
+                const priceRaw = parseFloat(parts[2]);
+                const placeRaw = parts[6] || currentBlockStore;
+                if (descRaw && !isNaN(qtyRaw) && !isNaN(priceRaw)) {
+                    const info = detectBrandAndShort(descRaw);
+                    if (!salesData[currentBlockDate]) salesData[currentBlockDate] = [];
+                    salesData[currentBlockDate].push({
+                        id: uid(),
+                        time: '12:00',
+                        brand: info.brand,
+                        name: info.short,
+                        fullName: info.fullName,
+                        qty: qtyRaw,
+                        price: priceRaw,
+                        place: placeRaw
+                    });
+                    importedCount++;
+                }
+            }
+        });
+
+        saveData();
+        renderStoreBar();
+        refreshAllViews();
+        pasteModal.classList.remove('active');
+        showToast(`Imported ${importedCount} items!`);
+    });
+
+    // ==============================================
+    // ADD CUSTOM PRODUCT TILE MODAL
+    // ==============================================
+    const newProdModal = document.getElementById('newProdModal');
+    document.getElementById('openNewProdModalBtn').addEventListener('click', () => newProdModal.classList.add('active'));
+    document.getElementById('closeNewProdModalBtn').addEventListener('click', () => newProdModal.classList.remove('active'));
+    document.getElementById('saveNewProdBtn').addEventListener('click', () => {
+        const brand = (document.getElementById('npBrand').value.trim() || 'GEN').toUpperCase();
+        const shortName = document.getElementById('npShort').value.trim().toUpperCase();
+        const fullName = (document.getElementById('npFull').value.trim() || shortName).toUpperCase();
+        const price = parseFloat(document.getElementById('npPrice').value) || 0;
+
+        if (!shortName) { showToast('Enter product name'); return; }
+        catalog.push({ brand, name: shortName, fullName, price });
+        saveData();
+        renderProductGrid(document.getElementById('prodSearch').value);
+        newProdModal.classList.remove('active');
+        showToast('Added Tile: ' + shortName);
+    });
+
+    // ==============================================
+    // SNAPSHOT AS JPG
+    // ==============================================
+    document.getElementById('snipJpgBtn').addEventListener('click', () => {
+        const dates = Object.keys(salesData).filter(d => (salesData[d] || []).length > 0).sort();
+        if (!dates.length) { showToast('No data to snapshot!'); return; }
+        showToast('Generating JPG snapshot…');
+        let allRows = [];
+
+        dates.forEach(dKey => {
+            const list = salesData[dKey] || [];
+            const dispDate = formatDisplayDate(dKey);
+            const sName = storeNames[dKey] || list[0]?.place || activeStore;
+            allRows.push({ type:'head', text:`STORE: ${sName}   |   DATE: ${dispDate}` });
+
+            let subTot = 0;
+            let subQty = 0;
+            list.forEach(i => {
+                const tot = i.qty * i.price;
+                subTot += tot;
+                subQty += i.qty;
+                allRows.push({
+                    type:'item',
+                    desc: getFullExportItemName(i),
+                    qty: i.qty,
+                    price: i.price.toFixed(2),
+                    total: tot.toFixed(2),
+                    pct: (tot * (globalCommission / 100)).toFixed(2),
+                    place: i.place || sName
+                });
+            });
+            allRows.push({
+                type:'sub',
+                text:'TOTAL',
+                qty: subQty,
+                total: subTot.toFixed(2),
+                pct: (subTot * (globalCommission / 100)).toFixed(2)
+            });
+        });
+
+        const canvas = document.getElementById('jpgCanvas');
+        const rowH = 22;
+        canvas.width = 780;
+        canvas.height = 120 + allRows.length * rowH;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#0f243d';
+        ctx.fillRect(15, 15, 750, 50);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 17px -apple-system, sans-serif';
+        ctx.fillText('VYSAKH MASTER SALES REPORT', 30, 46);
+        ctx.font = 'bold 11px -apple-system, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`INCENTIVE: ${globalCommission}%`, 745, 46);
+        ctx.textAlign = 'left';
+
+        let y = 85;
+        allRows.forEach(r => {
+            if (r.type === 'head') {
+                ctx.fillStyle = '#ecfdf5';
+                ctx.fillRect(15, y - 14, 750, 20);
+                ctx.fillStyle = '#059669';
+                ctx.font = 'bold 11px -apple-system, sans-serif';
+                ctx.fillText(r.text, 25, y);
+                y += 24;
+            } else if (r.type === 'item') {
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '10px -apple-system, sans-serif';
+                ctx.fillText(r.desc.substring(0, 42), 25, y);
+                ctx.textAlign = 'right';
+                ctx.fillText(String(r.qty), 350, y);
+                ctx.fillText(r.price, 425, y);
+                ctx.fillText(r.total, 500, y);
+                ctx.fillStyle = '#059669';
+                ctx.fillText(r.pct, 575, y);
+                ctx.fillStyle = '#0f172a';
+                ctx.fillText(r.total, 645, y);
+                ctx.textAlign = 'left';
+                ctx.fillText((r.place || '').substring(0, 16), 660, y);
+                y += rowH;
+            } else if (r.type === 'sub') {
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(15, y - 14, 750, 20);
+                ctx.fillStyle = '#0f243d';
+                ctx.font = 'bold 10px -apple-system, sans-serif';
+                ctx.fillText(r.text, 25, y);
+                ctx.textAlign = 'right';
+                ctx.fillText(String(r.qty), 350, y);
+                ctx.fillText(r.total, 500, y);
+                ctx.fillStyle = '#059669';
+                ctx.fillText(r.pct, 575, y);
+                ctx.fillStyle = '#0f243d';
+                ctx.fillText(r.total, 645, y);
+                ctx.textAlign = 'left';
+                y += 26;
+            }
+        });
 
         const link = document.createElement('a');
-        link.download = `VYSAKH-SALES-${activeDateKey}.png`;
-        link.href = exportCanvas.toDataURL('image/png');
+        link.download = `VYSAKH-SALES-${formatDisplayDate(activeDate)}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.92);
         link.click();
-        showToast('SUMMARY IMAGE DOWNLOADED');
+        showToast('JPG Snapshot Saved!');
+    });
+
+    // ==============================================
+    // HISTORY TAB
+    // ==============================================
+    function renderHistoryTab() {
+        document.getElementById('repSentDate').value = reportSentUpTo;
+        document.getElementById('amtReceivedInp').value = amountReceived || '';
+
+        let totalCommissionAll = 0;
+        let dates = Object.keys(salesData).filter(d => (salesData[d] || []).length > 0).sort();
+
+        dates.forEach(d => {
+            const list = salesData[d] || [];
+            list.forEach(i => {
+                totalCommissionAll += (i.qty * i.price) * (globalCommission / 100);
+            });
+        });
+
+        const pending = totalCommissionAll - amountReceived;
+        document.getElementById('histTotalComm').textContent = `AED ${totalCommissionAll.toFixed(2)}`;
+        document.getElementById('histReceivedDisplay').textContent = `AED ${(amountReceived || 0).toFixed(2)}`;
+        document.getElementById('histBalancePending').textContent = `AED ${Math.max(0, pending).toFixed(2)}`;
+
+        const listDiv = document.getElementById('historyDateList');
+        if (!dates.length) {
+            listDiv.innerHTML = `<div style="text-align:center; padding:1rem; color:var(--muted); font-size:0.74rem;">No saved dates yet.</div>`;
+            return;
+        }
+
+        listDiv.innerHTML = dates.map(dKey => {
+            const dispDate = formatDisplayDate(dKey);
+            const list = salesData[dKey] || [];
+            const dayTot = list.reduce((s,i) => s + (i.qty * i.price), 0);
+            const isSent = reportSentUpTo && dKey <= reportSentUpTo;
+            return `
+                <div class="history-card" style="border-left-color:${isSent ? 'var(--green)' : 'var(--amber)'};">
+                    <div>
+                        <strong>${dispDate}</strong>
+                        <div style="font-size:0.6rem; color:var(--muted);">${storeNames[dKey] || list[0]?.place || activeStore} · ${list.length} Items</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.35rem;">
+                        <div style="text-align:right;">
+                            <span style="font-weight:900; color:var(--navy);">AED ${dayTot.toFixed(2)}</span>
+                            <div style="font-size:0.58rem; font-weight:800; color:${isSent ? 'var(--green)' : 'var(--amber)'};">${isSent ? '✓ REPORT SENT' : 'PENDING REPORT'}</div>
+                        </div>
+                        <button class="btn btn-sm btn-wa hist-wa-btn" data-date="${dKey}">💬</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        listDiv.querySelectorAll('.hist-wa-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openWhatsAppShare(buildWhatsAppMessage([btn.dataset.date]));
+            });
+        });
     }
 
-    activeDatePicker.addEventListener('change', () => { if (activeDatePicker.value) { activeDateKey = activeDatePicker.value; renderAll(); } });
-    document.getElementById('prevDayBtn').addEventListener('click', () => { activeDateKey = shiftDateKey(activeDateKey, -1); renderAll(); });
-    document.getElementById('nextDayBtn').addEventListener('click', () => { activeDateKey = shiftDateKey(activeDateKey, 1); renderAll(); });
-    jumpTodayBtn.addEventListener('click', () => { activeDateKey = todayKey(); renderAll(); });
+    document.getElementById('wipeAllMasterBtn').addEventListener('click', () => {
+        if (confirm('Clear all entries from the master database? (You can still click Undo right after)')) {
+            recordActionSnapshot();
+            salesData = {};
+            storeNames = {};
+            saveData();
+            refreshAllViews();
+            showToast('All sales entries cleared');
+        }
+    });
 
-    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+    // TAB SWITCHING
+    document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             btn.classList.add('active');
-            document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-            renderSummary();
+            const target = document.getElementById('tab-' + btn.dataset.tab);
+            if (target) target.classList.add('active');
+            if (btn.dataset.tab === 'ledger') renderMasterLedger();
+            if (btn.dataset.tab === 'history') renderHistoryTab();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
 
-    searchInput.addEventListener('input', () => { searchQuery = searchInput.value; renderProducts(); });
-    promoFilterBtn.addEventListener('click', () => { promoOnly = !promoOnly; promoFilterBtn.classList.toggle('on', promoOnly); renderProducts(); });
+    // BRAND FILTER CHIPS
+    document.querySelectorAll('#brandChips .b-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('#brandChips .b-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            activeBrandFilter = chip.dataset.brand;
+            renderProductGrid(document.getElementById('prodSearch').value);
+        });
+    });
+
+    document.getElementById('repSentDate').addEventListener('change', (e) => {
+        recordActionSnapshot();
+        reportSentUpTo = e.target.value;
+        saveData(); renderHistoryTab();
+    });
+    document.getElementById('amtReceivedInp').addEventListener('change', (e) => {
+        recordActionSnapshot();
+        amountReceived = parseFloat(e.target.value) || 0;
+        saveData(); renderHistoryTab();
+    });
+    document.getElementById('globalPctInp').addEventListener('change', (e) => {
+        recordActionSnapshot();
+        globalCommission = parseFloat(e.target.value) || 0;
+        saveData(); renderMasterLedger();
+    });
+
+    document.getElementById('currentDateInp').addEventListener('change', (e) => {
+        activeDate = e.target.value; renderTodayTable();
+    });
+    document.getElementById('prevDay').addEventListener('click', () => {
+        const [y,m,d] = activeDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d - 1);
+        activeDate = dt.toISOString().split('T')[0];
+        renderTodayTable();
+    });
+    document.getElementById('nextDay').addEventListener('click', () => {
+        const [y,m,d] = activeDate.split('-').map(Number);
+        const dt = new Date(y, m - 1, d + 1);
+        activeDate = dt.toISOString().split('T')[0];
+        renderTodayTable();
+    });
 
     document.getElementById('clearDayBtn').addEventListener('click', () => {
-        if (confirm('CLEAR ALL ENTRIES FOR ' + formatDateDisplay(activeDateKey) + '?')) {
-            checkpoint('DATE CLEARED');
-            salesByDate[activeDateKey] = { entries: [], sent: false, updatedAt: Date.now() };
-            saveData(); renderAll(); showToast('DATE CLEARED');
+        if (confirm('Clear entries for selected date?')) {
+            recordActionSnapshot();
+            salesData[activeDate] = [];
+            saveData(); renderTodayTable();
         }
     });
 
-    document.getElementById('exportBtn').addEventListener('click', () => openRange(activeDateKey));
-    document.getElementById('exportCsvBtn').addEventListener('click', () => openRange(activeDateKey));
-
-    document.getElementById('markSentBtn').addEventListener('click', () => {
-        const entries = getActiveDateEntries();
-        if (entries.length === 0) { showToast('NO SALES ON THIS DATE'); return; }
-        const { total, commission } = calcDateTotals(activeDateKey);
-        lastSent = { date: activeDateKey, total, commission, commissionPct: globalCommission };
-        salesByDate[activeDateKey].sent = true;
-        salesByDate[activeDateKey].updatedAt = Date.now();
-        saveData(); renderHistory(); renderLastSent();
-        showToast('MARKED AS SENT TO DOCTOR');
+    document.getElementById('prodSearch').addEventListener('input', (e) => {
+        renderProductGrid(e.target.value);
     });
 
-    globalCommissionInput.addEventListener('change', () => {
-        globalCommission = Math.min(100, Math.max(0, parseFloat(globalCommissionInput.value) || 0));
-        globalCommissionInput.value = globalCommission;
-        saveData(); renderSummary(); renderHistory(); renderLastSent();
-    });
-
-    document.getElementById('exportBackupBtn').addEventListener('click', () => {
-        const blob = new Blob([JSON.stringify({ products, salesByDate, lastSent, globalCommission }, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `VYSAKH-SALES-BACKUP-${activeDateKey}.json`; a.click();
-        URL.revokeObjectURL(url); showToast('BACKUP DOWNLOADED');
-    });
-
-    document.getElementById('importBackupBtn').addEventListener('click', () => { importFileInput.value = ''; importFileInput.click(); });
-    importFileInput.addEventListener('change', (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const d = JSON.parse(ev.target.result);
-                products = d.products || DEFAULT_PRODUCTS;
-                salesByDate = d.salesByDate || {};
-                lastSent = d.lastSent || null;
-                globalCommission = d.globalCommission ?? 10;
-                saveData(); renderAll(); showToast('BACKUP RESTORED SUCCESSFULLY');
-            } catch(err) { showToast('INVALID BACKUP FILE'); }
-        };
-        reader.readAsText(file);
-    });
-
-    document.getElementById('resetAllBtn').addEventListener('click', () => {
-        if (confirm('DELETE ALL DATA AND RESET?')) {
-            localStorage.removeItem(STORAGE_KEY);
-            loadData(); renderAll(); showToast('RESET COMPLETE');
-        }
-    });
-
-    loadData();
-    initPinLock();
-    renderAll();
+    initData();
+    renderStoreBar();
+    renderProductGrid();
+    refreshAllViews();
+    updateUndoRedoButtons();
 })();
 </script>
 </body>
